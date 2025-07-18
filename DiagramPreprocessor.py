@@ -2,8 +2,10 @@ import cv2
 import numpy as np
 import fitz  # PyMuPDF
 from PIL import Image
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
-
+r'''
 # FIND BOUNDING BOXES! -----------------------------------------------------------------------------
 
 # -------- STEP 1: Save Image --------
@@ -115,8 +117,57 @@ cv2.drawContours(contour_img, filtered_contours, -1, (255, 0, 0), thickness=2)
 cv2.imwrite("contours.png", contour_img)
 
 
-
+'''
 #------------------------------------------------------------------------------------
 
 # FIND VOID BOXES -- DOTTED LINE BOXES WITH DOTTED CROSS DIAGONALS
+# Load image
+import cv2
+import numpy as np
 
+def is_dotted(line_img, min_white_ratio=0.3, max_white_ratio=0.6):
+    # Crop the center horizontal/vertical stripe of the line
+    h, w = line_img.shape
+    stripe = line_img[h//2 - 1:h//2 + 2, :] if w > h else line_img[:, w//2 - 1:w//2 + 2]
+    _, binary = cv2.threshold(stripe, 127, 255, cv2.THRESH_BINARY_INV)
+    white_ratio = np.sum(binary == 255) / binary.size
+    return min_white_ratio < white_ratio < max_white_ratio
+
+def detect_dotted_boxes(image_path):
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (3, 3), 0)
+
+    edges = cv2.Canny(blur, 30, 100, apertureSize=3)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=30, maxLineGap=20)
+
+    dotted_lines = []
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            line_img = gray[min(y1, y2):max(y1, y2)+1, min(x1, x2):max(x1, x2)+1]
+            if line_img.shape[0] > 0 and line_img.shape[1] > 0 and is_dotted(line_img):
+                dotted_lines.append((x1, y1, x2, y2))
+    
+    output = image.copy()
+    for x1, y1, x2, y2 in dotted_lines:
+        cv2.line(output, (x1, y1), (x2, y2), 255, 2)
+    
+    # # Create a mask for contour grouping
+    # mask = np.zeros_like(gray)
+    # for x1, y1, x2, y2 in dotted_lines:
+    #     cv2.line(mask, (x1, y1), (x2, y2), 255, 2)
+
+    # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # output = image.copy()
+    # for cnt in contours:
+    #     approx = cv2.approxPolyDP(cnt, 5, True)
+    #     x, y, w, h = cv2.boundingRect(approx)
+    #     if w > 20 and h > 20:
+    #         cv2.rectangle(output, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+    return output
+
+# Usage
+result_img = detect_dotted_boxes("page1.png")
+cv2.imwrite("detected_void_boxes.png", result_img)
