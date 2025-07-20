@@ -4,6 +4,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import math
 
 r'''
 # FIND BOUNDING BOXES! -----------------------------------------------------------------------------
@@ -121,53 +122,79 @@ cv2.imwrite("contours.png", contour_img)
 #------------------------------------------------------------------------------------
 
 # FIND VOID BOXES -- DOTTED LINE BOXES WITH DOTTED CROSS DIAGONALS
-# Load image
-import cv2
-import numpy as np
 
-def is_dotted(line_img, min_white_ratio=0.3, max_white_ratio=0.6):
-    # Crop the center horizontal/vertical stripe of the line
-    h, w = line_img.shape
-    stripe = line_img[h//2 - 1:h//2 + 2, :] if w > h else line_img[:, w//2 - 1:w//2 + 2]
-    _, binary = cv2.threshold(stripe, 127, 255, cv2.THRESH_BINARY_INV)
-    white_ratio = np.sum(binary == 255) / binary.size
-    return min_white_ratio < white_ratio < max_white_ratio
+# Load the image
+anglethresh = 3
+regularity_threshold = 3
+transition_threshold = 5
 
-def detect_dotted_boxes(image_path):
-    image = cv2.imread(image_path)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (3, 3), 0)
+hough_threshold = 40
 
-    edges = cv2.Canny(blur, 30, 100, apertureSize=3)
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=30, maxLineGap=20)
 
-    dotted_lines = []
-    if lines is not None:
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            line_img = gray[min(y1, y2):max(y1, y2)+1, min(x1, x2):max(x1, x2)+1]
-            if line_img.shape[0] > 0 and line_img.shape[1] > 0 and is_dotted(line_img):
-                dotted_lines.append((x1, y1, x2, y2))
+img = cv2.imread('page1.png')
+output = img.copy()
+
+# Convert to grayscale
+imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+_, binary = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY_INV)
+
+# Use Canny edge detection
+imgEdges = cv2.Canny(binary, 150, 250)
+dilated = cv2.dilate(imgEdges, (7,7), iterations = 2)
+eroded = cv2.erode(dilated, (7,7), iterations = 1)
+cv2.imwrite("canny.png", eroded)
+
+# HoughLinesP to detect all lines
+imgLines = cv2.HoughLinesP(eroded, 1, np.pi / 1440, threshold=hough_threshold, minLineLength=80, maxLineGap=30)
+
+
+
+# Function to determine if a line is dotted
+def is_dotted(line):
+    x1, y1, x2, y2 = line  # Unpack the coordinates of the line
+    line_pixels = imgGray[min(y1, y2):max(y1, y2), min(x1, x2):max(x1, x2)]
+    dark_pixels = np.sum(line_pixels > 200)  # Counts dark pixels
+
+    transitions = np.diff(line_pixels > 100).astype(np.int32)  # Calculate transition points (0->1 or 1->0)
     
-    output = image.copy()
-    for x1, y1, x2, y2 in dotted_lines:
-        cv2.line(output, (x1, y1), (x2, y2), 255, 2)
+    # Count number of transitions
+    transition_count = np.sum(np.abs(transitions) > 0)
     
-    # # Create a mask for contour grouping
-    # mask = np.zeros_like(gray)
-    # for x1, y1, x2, y2 in dotted_lines:
-    #     cv2.line(mask, (x1, y1), (x2, y2), 255, 2)
+    # Ensure the frequency of transitions is approximately equal
+    if transition_count > transition_threshold and np.std(np.diff(np.where(transitions != 0)[0])) < regularity_threshold:  # Check for regularity
+        return True
+    return False
 
-    # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # output = image.copy()
-    # for cnt in contours:
-    #     approx = cv2.approxPolyDP(cnt, 5, True)
-    #     x, y, w, h = cv2.boundingRect(approx)
-    #     if w > 20 and h > 20:
-    #         cv2.rectangle(output, (x, y), (x + w, y + h), (0, 0, 255), 2)
+def calculate_angle(x1, y1, x2, y2):
+    angle_rad = math.atan2(y2 - y1, x2 - x1)
+    angle_deg = math.degrees(angle_rad)
+    return angle_deg if angle_deg >= 0 else angle_deg + 180  # Ensure 0°-180°
 
-    return output
+# Loop through all lines detected
+dotted_lines = []
+for line in imgLines:
+    x1, y1, x2, y2 = line[0]
+    theta = calculate_angle(x1,y1,x2,y2)
+    if is_dotted(line[0]) and abs(theta-0) > anglethresh and abs(180-theta) > anglethresh and abs(theta-90)>anglethresh:  # Check if the line is dotted
+        dotted_lines.append((x1, y1, x2, y2))
+        cv2.line(output, (x1, y1), (x2, y2), (0, 0, 255), 2)  # Draw green lines for dotted
+    else:
+        cv2.line(output, (x1, y1), (x2, y2), (0,255 , 0), 2)  # Draw green lines for dotted
 
-# Usage
-result_img = detect_dotted_boxes("page1.png")
-cv2.imwrite("detected_void_boxes.png", result_img)
+
+# Save the result
+cv2.imwrite("detected_void_boxes.png", output)
+print(f"Detected dotted lines: found {len(dotted_lines)}")
+
+
+
+#Draw bounding boxes for voids
+
+bound = cv2.imread('page1.png').copy()
+
+for x1,y1,x2,y2 in dotted_lines:
+    x, y, w, h = cv2.boundingRect(np.array([(x1, y1), (x2, y2)]))
+    # Draw the rectangle around the line
+    cv2.rectangle(bound, (x, y), (x + w, y + h), (0, 0, 255), 2)  # Red rectangle
+
+cv2.imwrite("voids.png", bound)
