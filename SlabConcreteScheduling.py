@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
-import DiagramPreprocessor
+import Grey_box_detector
 from collections import defaultdict
 
-rectangles = DiagramPreprocessor.filtered_contours
+rectangles = Grey_box_detector.filtered_contours
 
 
 # -------- STEP 1: Sort Boxes --------
