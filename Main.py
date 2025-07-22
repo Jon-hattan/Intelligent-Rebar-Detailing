@@ -1,8 +1,8 @@
 import fitz  # PyMuPDF
 import numpy as np
 from collections import defaultdict
-import Grey_box_detector
-import Void_box_detector
+import Preprocessors.Grey_box_detector as Grey_box_detector
+import Preprocessors.Void_box_detector as Void_box_detector
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.filtered_contours

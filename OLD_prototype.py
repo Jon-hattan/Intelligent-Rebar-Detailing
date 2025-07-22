@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-import Grey_box_detector
-import Void_box_detector
+import Preprocessors.Grey_box_detector as Grey_box_detector
+import Preprocessors.Void_box_detector as Void_box_detector
 from collections import defaultdict
 
 
