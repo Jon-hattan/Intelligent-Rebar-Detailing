@@ -57,7 +57,7 @@ def get_intersection_bounding_boxes(lines):
     return rectangles
 
 
-def merge_rectangles_with_morphology(rectangles, image):
+def merge_rectangles_with_morphology(rectangles, image, filter = True):
     """
     Merges bounding rectangles using morphological operations.
     
@@ -74,7 +74,8 @@ def merge_rectangles_with_morphology(rectangles, image):
         cv2.rectangle(binary_image, rect[0], rect[1], (255), thickness=cv2.FILLED)
     
     # Step 3: Apply morphological closing to merge nearby rectangles
-    kernel = np.ones((30, 30), np.uint8)  # Adjust the kernel size to merge closely spaced rectangles
+    kernel_size = 30 if filter else 1
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)  # Adjust the kernel size to merge closely spaced rectangles
     closed_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
     closed_image = cv2.cvtColor(closed_image, cv2.COLOR_BGR2GRAY)
 
@@ -82,14 +83,16 @@ def merge_rectangles_with_morphology(rectangles, image):
     # Step 4: Find contours in the closed image (merged areas)
     contours, _ = cv2.findContours(closed_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
-
+    
     print(f"Detected merged boxes: found {len(contours)}")
+
     # Step 5: Draw the final merged rectangles
-    output_image = image.copy()
+    filtered_contours = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        if w > 10 and h > 10:  # Filter out very small rectangles
-            cv2.rectangle(output_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        if not filter or (w > 10 and h > 10):  # Filter out very small rectangles, only if filter is True
+            filtered_contours.append(((x, y), (x + w, y + h)))
     
-    return output_image
+    return filtered_contours
 
+    
