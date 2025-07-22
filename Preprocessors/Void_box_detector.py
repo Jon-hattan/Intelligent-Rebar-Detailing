@@ -7,6 +7,7 @@ import Preprocessors.bounding_boxes as bb
 import Preprocessors.dotted_lines_check as dotted
 
 def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
+    
     #------------------------------------------------------------------------------------
 
     # FIND VOID BOXES -- DOTTED LINE BOXES WITH DOTTED CROSS DIAGONALS
@@ -15,6 +16,8 @@ def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
     # Load the image
 
     size_limit = 30 #if size upper is lower than this, don't erode lines or filter out small contours --> it will over-thin and filter out the relevant lines.
+    size = "large" if size_upper > size_limit else "medium" 
+    print(f"\nFinding {size} void boxes....\n")
 
     anglethresh = 2
     regularity_threshold = 10

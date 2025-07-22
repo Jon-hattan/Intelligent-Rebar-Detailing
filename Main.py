@@ -1,3 +1,4 @@
+import cv2
 import fitz  # PyMuPDF
 import numpy as np
 from collections import defaultdict
@@ -9,13 +10,16 @@ rectangles = Grey_box_detector.filtered_contours
 void_boxes = Void_box_detector.find_voids()
 
 # Sort rectangles by top-left position
-def top_left_sort_key(box):
-    top_y = min(point[1] for point in box)
-    left_x = min(point[0] for point in box)
-    row_band = round(top_y / 20)
-    return (row_band, left_x)
+def sortingkey(banded = True):
+    def top_left_sort_key(box):
+        top_y = min(point[1] for point in box)
+        left_x = min(point[0] for point in box)
+        row_band = round(top_y / 20) if banded else top_y
+        return (row_band, left_x)
+    return top_left_sort_key
 
-rectangles.sort(key=top_left_sort_key)
+rectangles.sort(key=sortingkey())
+void_boxes.sort(key=sortingkey(banded = False))
 
 # Group threshold for similar top y positions
 Y_THRESHOLD = 10
@@ -33,7 +37,7 @@ x_min = min(pt[0] for pt in zero_box)
 x_max = max(pt[0] for pt in zero_box)
 
 # Load the image to get dimensions
-import cv2
+
 image = cv2.imread("contours.png")
 img_height, img_width = image.shape[:2]
 
@@ -53,6 +57,8 @@ MAX_LEN = 2000
 Y_OFFSET = 8
 OVERLAP = 80
 
+
+
 for group in groups.values():
     y_positions = []
     for _, box in group:
@@ -65,13 +71,16 @@ for group in groups.values():
     if total_length > MAX_LEN:
         n_splits = int(np.ceil(total_length / MAX_LEN))
         segment_length = total_length / n_splits
+        
 
         for i in range(n_splits):
             x1 = int(x_min + i * segment_length)
-            x2 = int(x1 + segment_length + OVERLAP)
-            if x2 > x_max:
-                x2 = int(x_max)
+            x2 = max(int(x1 + segment_length + OVERLAP), int(x_max))
             y = int(avg_y + ((-1) ** i) * Y_OFFSET)
+
+            #avoiding void boxes
+
+
             sx1, sy1 = scale_coords(x1, y)
             sx2, sy2 = scale_coords(x2, y)
             line = page.add_line_annot((sx1, sy1), (sx2, sy2))
@@ -86,14 +95,14 @@ for group in groups.values():
         line.set_border(width=2)
         line.update()
 
-# # Label box indices
-# for idx, box in enumerate(rectangles):
-#     M = np.mean(box.reshape(4, 2), axis=0)
-#     center_x, center_y = int(M[0]), int(M[1])
-#     sx, sy = scale_coords(center_x, center_y)
-#     note = page.add_text_annot((sx, sy), str(idx))
-#     note.set_colors(stroke=(1, 0, 0), fill=(1, 1, 0.8))
-#     note.update()
+# Label box indices
+for idx, box in enumerate(rectangles):
+    M = np.mean(box.reshape(4, 2), axis=0)
+    center_x, center_y = int(M[0]), int(M[1])
+    sx, sy = scale_coords(center_x, center_y)
+    note = page.add_text_annot((sx, sy), str(idx))
+    note.set_colors(stroke=(1, 0, 0), fill=(1, 1, 0.8))
+    note.update()
 
 # Save the annotated PDF
 doc.save(output_pdf_path)
