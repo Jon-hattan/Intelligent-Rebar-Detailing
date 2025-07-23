@@ -6,6 +6,9 @@ from collections import defaultdict
 
 
 def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
+
+    print("\nUndergoing rectangle subtraction...")
+
     # Convert to shapely boxes
     outer_polys = [box(*rect) for rect in bounding_boxes]
     inner_polys = [box(*rect) for rect in void_boxes]
@@ -21,6 +24,7 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
     for poly in remaining_polys:
         resulting_rectangles.extend(vertical_band_decomposition(poly))
     merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+    
 
     #Filter out small rectangles
     filtered_rectangles = [
@@ -28,7 +32,9 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
         if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height
     ]
 
+    print(f"Merged and filtered rectangles. Found {len(filtered_rectangles)}")
 
+    
 
     # Visualization
     fig, ax = plt.subplots()
@@ -48,12 +54,20 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
     ax.set_aspect('equal')
     plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
     plt.show()
+    
+    filtered_rectangles = [
+            [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
+            for x1, y1, x2, y2 in filtered_rectangles
+        ]
+
+
+    return filtered_rectangles
 
 
     # Output the resulting rectangles
-    print("Decomposed and Merged Rectangles:")
-    for rect in merged_rectangles:
-        print(rect)
+    # print("Decomposed and Merged Rectangles:")
+    # for rect in merged_rectangles:
+    #     print(rect)
 
 
 
@@ -82,7 +96,8 @@ def vertical_band_decomposition(poly):
     return rectangles
 
 # Merge adjacent rectangles with same x1, x2 and y continuity
-def merge_vertical_rectangles(rects):
+def merge_vertical_rectangles(rects, epsilon=10):
+    from collections import defaultdict
     grouped = defaultdict(list)
     for x1, y1, x2, y2 in rects:
         grouped[(x1, x2)].append((y1, y2))
@@ -91,13 +106,14 @@ def merge_vertical_rectangles(rects):
         y_ranges.sort()
         start_y, end_y = y_ranges[0]
         for y1, y2 in y_ranges[1:]:
-            if y1 == end_y:
+            if abs(y1 - end_y) < epsilon:
                 end_y = y2
             else:
                 merged.append((x1, start_y, x2, end_y))
                 start_y, end_y = y1, y2
         merged.append((x1, start_y, x2, end_y))
     return merged
+
 
 
 

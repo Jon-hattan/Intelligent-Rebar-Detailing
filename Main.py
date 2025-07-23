@@ -36,11 +36,11 @@ def sortingkey(banded = True):
     return top_left_sort_key
 
 rectangles.sort(key=sortingkey())
-void_boxes.sort(key=sortingkey(banded = False))
+# void_boxes.sort(key=sortingkey(banded = False))
 
 # Group threshold for similar top y positions
 Y_THRESHOLD = 20
-boxes = rectangles[1:]
+boxes = remaining_rects
 
 groups = defaultdict(list) #maps the groups to the (box index, box)
 for idx, box in enumerate(boxes):
@@ -74,7 +74,7 @@ MAX_LEN = 2500
 Y_OFFSET = 8
 X_OVERLAP = 80
 
-
+print("Annotating diagram....")
 for key, group in groups.items():
     lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN)
     for line in lines:
@@ -90,7 +90,8 @@ for key, group in groups.items():
     
     # Label box indices
     for idx, box in group:
-        M = np.mean(box.reshape(4, 2), axis=0)
+        box = np.array(box)  # Ensure it's a NumPy array
+        M = np.mean(box, axis=0)  # Compute center point
         center_x, center_y = int(M[0]), int(M[1])
         sx, sy = scale_coords(center_x, center_y)
         note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 12, color = (1, 0 ,0))

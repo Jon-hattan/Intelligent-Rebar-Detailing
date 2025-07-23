@@ -4,11 +4,13 @@ from collections import defaultdict
 def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN):
     group_rectangles = [box for _, box in group] #get boxes
 
-    y_positions = [np.mean(box.reshape(4, 2), axis=0)[1] for box in group_rectangles]
-    min_y = int(np.min(y_positions)) #get average y-position of boxes in the group
+    
+    # Compute the mean y-position of each rectangle
+    y_positions = [np.mean(np.array(box), axis=0)[1] for box in group_rectangles]
+    min_y = int(np.min(y_positions))  # Get minimum y-position
 
-
-    centers = sorted([int(np.mean(box[:, 0])) for box in group_rectangles]) #centers of each box
+    # Compute the center x-position of each rectangle
+    centers = sorted([int(np.mean(np.array(box)[:, 0])) for box in group_rectangles])
 
     #generate all valid segments
     split_candidates = [x_min] + centers + [x_max]
