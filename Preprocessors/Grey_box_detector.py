@@ -7,7 +7,7 @@ import math
 
 
 # FIND BOUNDING BOXES! -----------------------------------------------------------------------------
-print("\nFinding bounding boxes...\n")
+print("\nFinding bounding boxes...")
 
 # -------- STEP 1: Save Image --------
 pdf_path = r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean.pdf"

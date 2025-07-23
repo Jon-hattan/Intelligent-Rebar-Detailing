@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 from collections import defaultdict
 import math
-import Preprocessors.merging_lines as merge
-import Preprocessors.bounding_boxes as bb
-import Preprocessors.dotted_lines_check as dotted
+from Preprocessors.Helpers import merging_lines as merge
+from Preprocessors.Helpers import bounding_boxes as bb
+from Preprocessors.Helpers import dotted_lines_check as dotted
 
 def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
     

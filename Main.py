@@ -1,13 +1,30 @@
 import cv2
 import fitz  # PyMuPDF
 import numpy as np
+import math
 from collections import defaultdict
 import Preprocessors.Grey_box_detector as Grey_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
+import optimal_lines as OL
+import Preprocessors.Rectangle_subtraction as RS
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.filtered_contours
 void_boxes = Void_box_detector.find_voids()
+
+#convert rectangles to corner points
+bounding_rects = []
+for box in rectangles[1:]:
+    x_coords = box[:, 0]
+    y_coords = box[:, 1]
+    x1, y1 = x_coords.min(), y_coords.min()
+    x2, y2 = x_coords.max(), y_coords.max()
+    bounding_rects.append((x1, y1, x2, y2))
+
+void_rects = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for (a, b) in void_boxes]
+
+# Do rectangular substraction
+remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 10, 10)
 
 # Sort rectangles by top-left position
 def sortingkey(banded = True):
@@ -22,14 +39,14 @@ rectangles.sort(key=sortingkey())
 void_boxes.sort(key=sortingkey(banded = False))
 
 # Group threshold for similar top y positions
-Y_THRESHOLD = 10
+Y_THRESHOLD = 20
 boxes = rectangles[1:]
 
-groups = defaultdict(list)
+groups = defaultdict(list) #maps the groups to the (box index, box)
 for idx, box in enumerate(boxes):
     top_y = min(point[1] for point in box)
     key = round(top_y / Y_THRESHOLD)
-    groups[key].append((idx + 1, box))
+    groups[key].append((idx + 1, box)) #box index, box
 
 # Use the 0-th box as horizontal span
 zero_box = rectangles[0]
@@ -53,59 +70,38 @@ def scale_coords(x, y):
     return (x / img_width) * pdf_width, (y / img_height) * pdf_height
 
 # Draw lines on PDF
-MAX_LEN = 2000
+MAX_LEN = 2500
 Y_OFFSET = 8
-OVERLAP = 80
+X_OVERLAP = 80
 
 
-
-for group in groups.values():
-    y_positions = []
-    for _, box in group:
-        center = np.mean(box.reshape(4, 2), axis=0)
-        y_positions.append(center[1])
-    avg_y = int(np.mean(y_positions))
-
-    total_length = x_max - x_min
-
-    if total_length > MAX_LEN:
-        n_splits = int(np.ceil(total_length / MAX_LEN))
-        segment_length = total_length / n_splits
-        
-
-        for i in range(n_splits):
-            x1 = int(x_min + i * segment_length)
-            x2 = max(int(x1 + segment_length + OVERLAP), int(x_max))
-            y = int(avg_y + ((-1) ** i) * Y_OFFSET)
-
-            #avoiding void boxes
-
-
-            sx1, sy1 = scale_coords(x1, y)
-            sx2, sy2 = scale_coords(x2, y)
-            line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-            line.set_colors(stroke=(1, 0, 0))
-            line.set_border(width=2)
-            line.update()
-    else:
-        sx1, sy1 = scale_coords(x_min, avg_y)
-        sx2, sy2 = scale_coords(x_max, avg_y)
+for key, group in groups.items():
+    lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN)
+    for line in lines:
+        (x1, y), (x2, y) = line
+        sx1, sy1 = scale_coords(x1, y)
+        sx2, sy2 = scale_coords(x2, y)
         line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-        line.set_colors(stroke=(1, 0, 0))
-        line.set_border(width=2)
+        line.set_colors(stroke=(0, 0, 1))
+        line.set_border(width=1)
         line.update()
+        note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 12, color = (0, 0 ,1))
 
-# Label box indices
-for idx, box in enumerate(rectangles):
-    M = np.mean(box.reshape(4, 2), axis=0)
-    center_x, center_y = int(M[0]), int(M[1])
-    sx, sy = scale_coords(center_x, center_y)
-    note = page.add_text_annot((sx, sy), str(idx))
-    note.set_colors(stroke=(1, 0, 0), fill=(1, 1, 0.8))
-    note.update()
+    
+    # Label box indices
+    for idx, box in group:
+        M = np.mean(box.reshape(4, 2), axis=0)
+        center_x, center_y = int(M[0]), int(M[1])
+        sx, sy = scale_coords(center_x, center_y)
+        note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 12, color = (1, 0 ,0))
+        #writes the idx and group key
+
+
+
+
 
 # Save the annotated PDF
 doc.save(output_pdf_path)
 doc.close()
 
-print(f"Annotated PDF saved as {output_pdf_path}")
+print(f"\nAnnotated PDF saved as {output_pdf_path}")
