@@ -25,14 +25,20 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
         resulting_rectangles.extend(vertical_band_decomposition(poly))
     merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
     
-
+    #Split lines
+    split_lines = generate_split_lines(void_boxes)
+    split_lines = merge_similar_horizontal_lines(split_lines)
+    split_boxes = split_boxes_by_lines(merged_rectangles, split_lines)
+    
     #Filter out small rectangles
-    filtered_rectangles = [
-        rect for rect in merged_rectangles
+    filtered_boxes = [
+        rect for rect in split_boxes
         if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height
     ]
 
-    print(f"Merged and filtered rectangles. Found {len(filtered_rectangles)}")
+    
+
+    print(f"Merged, filtered and resplit rectangles. Found {len(filtered_boxes)}")
 
     
 
@@ -44,7 +50,7 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
     for rect in void_boxes:
         ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
                             edgecolor='red', facecolor='red', alpha=0.5))
-    for rect in filtered_rectangles:
+    for rect in filtered_boxes:
         x1, y1, x2, y2 = rect
         ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
                             edgecolor='blue', facecolor='blue', alpha=0.3))
@@ -55,13 +61,13 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
     plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
     plt.show()
     
-    filtered_rectangles = [
+    filtered_boxes = [
             [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
-            for x1, y1, x2, y2 in filtered_rectangles
+            for x1, y1, x2, y2 in filtered_boxes
         ]
 
 
-    return filtered_rectangles
+    return filtered_boxes
 
 
     # Output the resulting rectangles
@@ -115,6 +121,90 @@ def merge_vertical_rectangles(rects, epsilon=10):
     return merged
 
 
+def split_boxes_by_lines(boxes, lines):
+    result = []
+    for box in boxes:
+        x_min, y_min, x_max, y_max = box
+        splits = [y_min, y_max]
+        for y, x_start, x_end in lines:
+            if y_min < y < y_max and x_start < x_max and x_end > x_min:
+                splits.append(y)
+        splits = sorted(set(splits))
+        for i in range(len(splits) - 1):
+            result.append((x_min, splits[i], x_max, splits[i+1]))
+    return result
 
+
+# Define a function to generate split lines from void boxes
+def generate_split_lines(void_boxes):
+    split_lines = []
+
+    for box in void_boxes:
+        x_min, y_min, x_max, y_max = box
+
+        for y in [y_min, y_max]:  # top and bottom edges
+            # Extend left
+            x_left = x_min
+            while True:
+                blocking = [b for b in void_boxes if b[1] < y < b[3] and b[2] <= x_left]
+                if not blocking:
+                    x_start = float('-inf')
+                    break
+                x_block = max(b[2] for b in blocking)
+                if x_block < x_left:
+                    x_start = x_block
+                    break
+
+            # Extend right
+            x_right = x_max
+            while True:
+                blocking = [b for b in void_boxes if b[1] < y < b[3] and b[0] >= x_right]
+                if not blocking:
+                    x_end = float('inf')
+                    break
+                x_block = min(b[0] for b in blocking)
+                if x_block > x_right:
+                    x_end = x_block
+                    break
+
+            split_lines.append((y, x_start, x_end))
+
+    return split_lines
+
+
+def merge_similar_horizontal_lines(lines, threshold=10):
+    """
+    Merge horizontal lines that have similar y-values within a given threshold.
+    Each line is a tuple: (y, x_start, x_end)
+    Returns a list of merged lines with averaged y-values and combined x-ranges.
+    """
+    lines.sort()
+    merged_lines = []
+    current_group = []
+
+    for line in lines:
+        y, x_start, x_end = line
+        if not current_group:
+            current_group.append(line)
+        else:
+            last_y = current_group[-1][0]
+            if abs(y - last_y) <= threshold:
+                current_group.append(line)
+            else:
+                # Merge current group
+                avg_y = sum(l[0] for l in current_group) / len(current_group)
+                min_x = min(l[1] for l in current_group)
+                max_x = max(l[2] for l in current_group)
+                merged_lines.append((avg_y, min_x, max_x))
+                current_group = [line]
+
+    # Merge the last group
+    if current_group:
+        avg_y = sum(l[0] for l in current_group) / len(current_group)
+        min_x = min(l[1] for l in current_group)
+        max_x = max(l[2] for l in current_group)
+        merged_lines.append((avg_y, min_x, max_x))
+
+    return merged_lines
 
 #rectangle_subtraction(bounding_boxes, void_boxes)

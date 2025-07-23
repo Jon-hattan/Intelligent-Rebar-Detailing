@@ -24,7 +24,7 @@ for box in rectangles[1:]:
 void_rects = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for (a, b) in void_boxes]
 
 # Do rectangular substraction
-remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 10, 10)
+remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 15, 15)
 
 # Sort rectangles by top-left position
 def sortingkey(banded = True):
