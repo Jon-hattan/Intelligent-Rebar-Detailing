@@ -9,6 +9,11 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
     min_x_value_forGroup = int(np.min([np.min(np.array(box)[:, 0]) for box in group_rectangles])) #smallest x value for this group
     max_x_value_forGroup = int(np.max([np.max(np.array(box)[:, 0]) for box in group_rectangles])) #largest x value for this group
     
+        
+    min_y_value_forGroup = int(np.min([np.min(np.array(box)[:, 1]) for box in group_rectangles]))  # smallest y
+    max_y_value_forGroup = int(np.max([np.max(np.array(box)[:, 1]) for box in group_rectangles]))  # largest y
+
+
     #if it is not the first box in the row, the line optimisation starts at the min x value, instead of the edge of the building
     if abs(min_x_value_forGroup - x_min) > 30:
             x_leftbound = min_x_value_forGroup
@@ -49,7 +54,9 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
     _, best_path = dp[x_rightbound]
 
     lines = []
+    arrows = []
     for i in range(len(best_path) - 1):
+        #ADD LINES
         #ensure that there is a bit of x-axis overlap between lines.
         x1 = best_path[i] - X_OVERLAP if best_path[i] != x_leftbound else best_path[i]
         x2 = best_path[i + 1] + X_OVERLAP if best_path[i + 1] != x_rightbound else best_path[i + 1] 
@@ -59,6 +66,15 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
 
         lines.append(((x1, y), (x2, y)))
 
-    return lines
+
+        #ADD PERPENDICULAR ARROWS
+        # Midpoint of the line
+        mid_x = 0.5 * (x1 + x2)
+
+        # Arrow spans full vertical extent of the group
+        arrows.append(((mid_x, min_y_value_forGroup), (mid_x, max_y_value_forGroup)))
+
+
+    return lines, arrows
 
 

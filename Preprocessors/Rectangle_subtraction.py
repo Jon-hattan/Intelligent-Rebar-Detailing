@@ -5,7 +5,7 @@ from shapely.ops import unary_union
 from collections import defaultdict
 
 
-def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
+def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min_area):
 
     print("\nUndergoing rectangle subtraction...")
 
@@ -33,7 +33,7 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
     #Filter out small rectangles
     filtered_boxes = [
         rect for rect in split_boxes
-        if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height
+        if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height and (rect[2] - rect[0])*(rect[3] - rect[1]) >= min_area
     ]
 
     

@@ -31,7 +31,7 @@ def overlaps_horizontally(box1, box2, threshold=30):
     is_vertically_adjacent = abs(max(y1_min, y1_max)-min(y2_min,y2_max)) <= threshold or abs(min(y1_min, y1_max)-max(y2_min,y2_max)) <= threshold
     return abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold and is_vertically_adjacent
 
-def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold=10):
+def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold=20):
     
     def compute_overlap(a_min, a_max, b_min, b_max):
             return max(0, min(a_max, b_max) - max(a_min, b_min))
@@ -40,11 +40,15 @@ def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold
     x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
     for vb in void_boxes:
         vx_min, vy_min, vx_max, vy_max = vb
+        #ensure that values are actually max and min
+        vx_min, vx_max = min(vx_min, vx_max), max(vx_min, vx_max)
+        vy_min, vy_max = min(vy_min, vy_max), max(vy_min, vy_max)
+
         if direction == 'right':
             # Check vertical overlap
             vertical_overlap = compute_overlap(y1_min, y1_max, vy_min, vy_max)
             min_height = min(y1_max - y1_min, vy_max - vy_min)
-            if min_height > 0 and vertical_overlap >= overlap_threshold:
+            if min_height > 0 and vertical_overlap >= 0:
                 # Check if void is horizontally between the boxes
                 if x1_max - vx_min <= overlap_threshold and vx_max - x2_min <= overlap_threshold:
                     return True
@@ -54,7 +58,7 @@ def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold
     return False
 
 
-def group_boxes(bounding_boxes, void_boxes):
+def group_boxes(bounding_boxes, void_boxes, min_lone_box_size = 6000):
     
     void_boxes.sort(key=lambda vb: (vb[1], vb[0]))  # Sort by top y, then left x
 
@@ -94,6 +98,14 @@ def group_boxes(bounding_boxes, void_boxes):
                     box = below_box
                 else:
                     break
+        
+        #filter out small single member groups
+        if len(current_group) == 1:
+            lone_box = current_group[0][1]
+            x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
+            area = (x1_max - x1_min) * (y1_max - y1_min)
+            if area < min_lone_box_size:
+                continue
 
         groups[group_id] = current_group
         group_id += 1

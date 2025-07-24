@@ -1,0 +1,53 @@
+import fitz  # PyMuPDF
+
+# Function to draw a triangle arrowhead
+def draw_arrowhead(shape, tip, direction='up', size=10):
+    x, y = tip
+    if direction == 'up':
+        points = [(x, y),
+                  (x - size / 2, y + size),
+                  (x + size / 2, y + size)]
+    elif direction == 'down':
+        points = [(x, y),
+                  (x - size / 2, y - size),
+                  (x + size / 2, y - size)]
+    shape.draw_polyline(points + [points[0]])
+
+# Function to draw a vertical arrow with triangle arrowheads at both ends
+def draw_vertical_arrow(page, x, y1, y2, line_color=(1, 0, 0), line_width=1):
+    # Draw the vertical line
+    line_shape = page.new_shape()
+    line_shape.draw_line((x, y1), (x, y2))
+    line_shape.finish(color=line_color, width=line_width)
+    line_shape.commit()
+
+    # Draw arrowheads
+    arrow_size = min(10, (y2-y1)//3)
+    arrow_shape = page.new_shape()
+    draw_arrowhead(arrow_shape, (x, y1), direction='up', size=arrow_size)
+    draw_arrowhead(arrow_shape, (x, y2), direction='down', size=arrow_size)
+    arrow_shape.finish(color=line_color, fill=line_color)
+    arrow_shape.commit()
+
+# Example usage: draw arrows of varying size from 10 to 500
+
+# # Create a new blank PDF
+# doc = fitz.open()
+# page = doc.new_page()
+
+
+# x_start = 50
+# x_gap = 20
+# for height in range(10, 510, 5):
+#     x = x_start + (height // 5) * x_gap
+#     y1 = 100
+#     y2 = y1 + height
+#     draw_vertical_arrow(page, x, y1, y2)
+
+# # Save the PDF
+# output_path = "varying_arrow_sizes.pdf"
+# doc.save(output_path)
+# doc.close()
+
+# print(f"PDF with varying arrow sizes saved as {output_path}")
+
