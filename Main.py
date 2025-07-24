@@ -39,7 +39,7 @@ rectangles.sort(key=sortingkey())
 void_boxes.sort(key=sortingkey())
 
 # Do rectangular substraction
-remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 15, 15)
+remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20)
 remaining_rects.sort(key = sortingkey())
 
 # Group threshold for similar top y positions
@@ -55,8 +55,8 @@ groups = BG.group_boxes(remaining_rects, void_rects)
 
 # Use the 0-th box as horizontal span
 zero_box = rectangles[0]
-x_min = min(pt[0] for pt in zero_box)
-x_max = max(pt[0] for pt in zero_box)
+x_leftbound = min(pt[0] for pt in zero_box)
+x_rightbound = max(pt[0] for pt in zero_box)
 
 # Load the image to get dimensions
 
@@ -79,40 +79,48 @@ MAX_LEN = 2500
 Y_OFFSET = 8
 X_OVERLAP = 80
 
+def get_rect_x_range(rects): #find the lowest and highest x values for the boxes
+    x_values = [x for rect in rects for x in (rect[0], rect[2])]
+    return min(x_values), max(x_values)
+
+x_min, x_max = get_rect_x_range(bounding_rects) #the minimum x and max x for the rectangles
+
+
+
 print("Annotating diagram....")
 for key, group in groups.items():
-    # lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN)
-    # for line in lines:
-    #     (x1, y), (x2, y) = line
-    #     sx1, sy1 = scale_coords(x1, y)
-    #     sx2, sy2 = scale_coords(x2, y)
-    #     line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-    #     line.set_colors(stroke=(0, 0, 1))
-    #     line.set_border(width=1)
-    #     line.update()
-    #     note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 12, color = (0, 0 ,1))
+    lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
+    for line in lines:
+        (x1, y), (x2, y) = line
+        sx1, sy1 = scale_coords(x1, y)
+        sx2, sy2 = scale_coords(x2, y)
+        line = page.add_line_annot((sx1, sy1), (sx2, sy2))
+        line.set_colors(stroke=(0, 0, 1))
+        line.set_border(width=1)
+        line.update()
+        note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 6, color = (0, 0 ,1))
 
     
-    # Label box indices
-    for idx, box in group:
-        box = np.array(box)  # Ensure it's a NumPy array
-        M = np.mean(box, axis=0)  # Compute center point
-        center_x, center_y = int(M[0]), int(M[1])
-        sx, sy = scale_coords(center_x, center_y)
-        note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 8, color = (1, 0 ,0))
-        #writes the idx and group key
+    # # Label box indices
+    # for idx, box in group:
+    #     box = np.array(box)  # Ensure it's a NumPy array
+    #     M = np.mean(box, axis=0)  # Compute center point
+    #     center_x, center_y = int(M[0]), int(M[1])
+    #     sx, sy = scale_coords(center_x, center_y)
+    #     note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 8, color = (1, 0 ,0))
+    #     #writes the idx and group key
 
         
-    # Draw rectangle
-        x1, y1 = box.min(axis=0)
-        x2, y2 = box.max(axis=0)
-        sx1, sy1 = scale_coords(x1, y1)
-        sx2, sy2 = scale_coords(x2, y2)
-        rect = fitz.Rect(sx1, sy1, sx2, sy2)
-        shape = page.new_shape()
-        shape.draw_rect(rect)
-        shape.finish(color=(0, 0, 1), fill=None, width=0.5)
-        shape.commit()
+    # # Draw rectangle
+    #     x1, y1 = box.min(axis=0)
+    #     x2, y2 = box.max(axis=0)
+    #     sx1, sy1 = scale_coords(x1, y1)
+    #     sx2, sy2 = scale_coords(x2, y2)
+    #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
+    #     shape = page.new_shape()
+    #     shape.draw_rect(rect)
+    #     shape.finish(color=(0, 0, 1), fill=None, width=0.5)
+    #     shape.commit()
 
 
 
