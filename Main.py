@@ -88,7 +88,17 @@ x_min, x_max = get_rect_x_range(bounding_rects) #the minimum x and max x for the
 
 
 print("Annotating diagram....")
+last_percent = -1 #initialize variable for progress printing
+
 for key, group in groups.items():
+
+    #percentage completion tracking
+    percent = (100*key//len(groups))
+    if percent % 20 == 0 and percent != last_percent:
+        print(f"Progress: {percent}% complete")
+        last_percent = percent
+    
+
     lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
     for line in lines:
         (x1, y), (x2, y) = line
