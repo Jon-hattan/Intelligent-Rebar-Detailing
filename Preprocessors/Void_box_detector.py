@@ -150,8 +150,11 @@ def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
     return merged_rectangles 
 
 
-def find_voids():
-    void_boxes = find_void_boxes_withSize(20, 0) #Medium size
+def find_voids(detect_mediums = True):
+    if detect_mediums:
+        void_boxes = find_void_boxes_withSize(20, 0) #Medium size
+    else:
+        void_boxes = []
     void_boxes.extend(find_void_boxes_withSize()) #Big size boxes
 
     img = cv2.imread('page1.png')

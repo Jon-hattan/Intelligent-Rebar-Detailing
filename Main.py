@@ -10,8 +10,10 @@ import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper as  BG
 import draw_arrows as DA
 
+pdf_path = r"C:\Users\jonch\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean (1).pdf"
+
 # Load rectangles and void boxes
-rectangles = Grey_box_detector.filtered_contours
+rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
 void_boxes = Void_box_detector.find_voids()
 
 #convert rectangles to corner points
@@ -32,7 +34,7 @@ def sortingkey(banded = True):
     def top_left_sort_key(box):
         top_y = min(point[1] for point in box)
         left_x = min(point[0] for point in box)
-        row_band = round(top_y / 7.5) if banded else top_y
+        row_band = round(top_y / 100) if banded else top_y
         return (row_band, left_x)
     return top_left_sort_key
 
@@ -65,7 +67,7 @@ image = cv2.imread("contours.png")
 img_height, img_width = image.shape[:2]
 
 # Open the PDF and get page dimensions
-pdf_path = r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean - Copy.pdf"
+
 output_pdf_path = "annotated.pdf"
 doc = fitz.open(pdf_path)
 page = doc[0]
