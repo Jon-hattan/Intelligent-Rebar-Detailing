@@ -1,52 +1,100 @@
 
 from collections import defaultdict
+import numpy as np
 
-def group_boxes_by_vertical_and_void_overlap(boxes, void_boxes, y_threshold=20):
+
+# Helper functions
+
+def box_bounds(box):
+    if isinstance(box, np.ndarray):
+        x_coords = box[:, 0]
+        y_coords = box[:, 1]
+    elif isinstance(box, list) and all(isinstance(pt, tuple) and len(pt) == 2 for pt in box):
+        x_coords = [pt[0] for pt in box]
+        y_coords = [pt[1] for pt in box]
+    elif isinstance(box, tuple) and len(box) == 4:
+        return box  # Already in (x1, y1, x2, y2) format
+    else:
+        raise ValueError(f"Unsupported box format: {box}")
+    
+    return min(x_coords), min(y_coords), max(x_coords), max(y_coords)
+
+
+def overlaps_vertically(box1, box2, threshold=30):
+    _, y1_min, _, y1_max = box_bounds(box1)
+    _, y2_min, _, y2_max = box_bounds(box2)
+    return abs(y1_min - y2_min) <= threshold and abs(y1_max - y2_max) <= threshold
+
+def overlaps_horizontally(box1, box2, threshold=30):
+    x1_min, y1_min, x1_max, y1_max = box_bounds(box1)
+    x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
+    is_vertically_adjacent = abs(max(y1_min, y1_max)-min(y2_min,y2_max)) <= threshold or abs(min(y1_min, y1_max)-max(y2_min,y2_max)) <= threshold
+    return abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold and is_vertically_adjacent
+
+def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold=10):
+    
+    def compute_overlap(a_min, a_max, b_min, b_max):
+            return max(0, min(a_max, b_max) - max(a_min, b_min))
+
+    x1_min, y1_min, x1_max, y1_max = box_bounds(box1)
+    x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
+    for vb in void_boxes:
+        vx_min, vy_min, vx_max, vy_max = vb
+        if direction == 'right':
+            # Check vertical overlap
+            vertical_overlap = compute_overlap(y1_min, y1_max, vy_min, vy_max)
+            min_height = min(y1_max - y1_min, vy_max - vy_min)
+            if min_height > 0 and vertical_overlap >= overlap_threshold:
+                # Check if void is horizontally between the boxes
+                if x1_max - vx_min <= overlap_threshold and vx_max - x2_min <= overlap_threshold:
+                    return True
+        elif direction == 'below':
+            if x1_min >= vx_min and x1_max <= vx_max and y1_max < vy_min < y2_min:
+                return True
+    return False
+
+
+def group_boxes(bounding_boxes, void_boxes):
+    
+    void_boxes.sort(key=lambda vb: (vb[1], vb[0]))  # Sort by top y, then left x
+
+    # Grouping logic
     groups = defaultdict(list)
+    visited = set()
     group_id = 0
 
-    # Step 1: Group boxes by vertical overlap
-    vertical_groups = []
-    for idx, box in enumerate(boxes):
-        min_y = min(pt[1] for pt in box)
-        max_y = max(pt[1] for pt in box)
-        assigned = False
-        for group in vertical_groups:
-            g_min_y, g_max_y = group['range']
-            if abs(min_y - g_min_y) <= y_threshold or abs(max_y - g_max_y) <= y_threshold or (min_y <= g_max_y and max_y >= g_min_y):
-                group['boxes'].append((idx + 1, box))
-                group['range'] = (min(min_y, g_min_y), max(max_y, g_max_y))
-                assigned = True
-                break
-        if not assigned:
-            vertical_groups.append({'range': (min_y, max_y), 'boxes': [(idx + 1, box)]})
+    for i, box in enumerate(bounding_boxes):
+        if i in visited:
+            continue
+        current_group = [(i, box)]
+        visited.add(i)
+ 
 
-    # Step 2: Split each vertical group based on relevant void box overlap
-    for group in vertical_groups:
-        g_min_y, g_max_y = group['range']
-        for idx, box in group['boxes']:
-            x_min = min(pt[0] for pt in box)
-            x_max = max(pt[0] for pt in box)
-            y_min = min(pt[1] for pt in box)
-            y_max = max(pt[1] for pt in box)
-
-            relevant_voids = [vb for vb in void_boxes if not (vb[3] < y_min or vb[1] > y_max)]
-
-            if not relevant_voids:
-                groups[group_id].append((idx, box))
+        # Check rightward boxes
+        for j in range(i + 1, len(bounding_boxes)):
+            if j in visited:
+                continue
+            right_box = bounding_boxes[j]
+            if overlaps_vertically(box, right_box) and not is_void_between(box, right_box, void_boxes, direction='right'):
+                current_group.append((j, right_box))
+                visited.add(j)
+                box = right_box
             else:
-                assigned = False
-                for vb in relevant_voids:
-                    if x_max < vb[0]:
-                        groups[group_id + 1].append((idx, box))
-                        assigned = True
-                        break
-                    elif x_min > vb[2]:
-                        groups[group_id + 2].append((idx, box))
-                        assigned = True
-                        break
-                if not assigned:
-                    groups[group_id + 3].append((idx, box))
-        group_id += 4
+                break
 
+        # If no horizontal grouping, check downward
+        if len(current_group) == 1:
+            for j in range(i + 1, len(bounding_boxes)):
+                if j in visited:
+                    continue
+                below_box = bounding_boxes[j]
+                if overlaps_horizontally(box, below_box) and not is_void_between(box, below_box, void_boxes, direction='below'):
+                    current_group.append((j, below_box))
+                    visited.add(j)
+                    box = below_box
+                else:
+                    break
+
+        groups[group_id] = current_group
+        group_id += 1
     return groups

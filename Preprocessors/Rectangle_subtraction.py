@@ -55,8 +55,8 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height):
         ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
                             edgecolor='blue', facecolor='blue', alpha=0.3))
 
-    ax.set_xlim(0, 10000)
-    ax.set_ylim(0, 10000)
+    ax.set_xlim(0, 15000)
+    ax.set_ylim(0, 15000)
     ax.set_aspect('equal')
     plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
     plt.show()

@@ -7,6 +7,7 @@ import Preprocessors.Grey_box_detector as Grey_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
+import Box_grouper as  BG
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.filtered_contours
@@ -23,30 +24,34 @@ for box in rectangles[1:]:
 
 void_rects = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for (a, b) in void_boxes]
 
-# Do rectangular substraction
-remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 15, 15)
+
 
 # Sort rectangles by top-left position
 def sortingkey(banded = True):
     def top_left_sort_key(box):
         top_y = min(point[1] for point in box)
         left_x = min(point[0] for point in box)
-        row_band = round(top_y / 20) if banded else top_y
+        row_band = round(top_y / 10) if banded else top_y
         return (row_band, left_x)
     return top_left_sort_key
 
 rectangles.sort(key=sortingkey())
-# void_boxes.sort(key=sortingkey(banded = False))
+void_boxes.sort(key=sortingkey())
+
+# Do rectangular substraction
+remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 15, 15)
+remaining_rects.sort(key = sortingkey())
 
 # Group threshold for similar top y positions
 Y_THRESHOLD = 20
 boxes = remaining_rects
 
-groups = defaultdict(list) #maps the groups to the (box index, box)
-for idx, box in enumerate(boxes):
-    top_y = min(point[1] for point in box)
-    key = round(top_y / Y_THRESHOLD)
-    groups[key].append((idx + 1, box)) #box index, box
+# groups = defaultdict(list) #maps the groups to the (box index, box)
+# for idx, box in enumerate(boxes):
+#     top_y = min(point[1] for point in box)
+#     key = round(top_y / Y_THRESHOLD)
+#     groups[key].append((idx + 1, box)) #box index, box
+groups = BG.group_boxes(remaining_rects, void_rects)
 
 # Use the 0-th box as horizontal span
 zero_box = rectangles[0]
@@ -76,16 +81,16 @@ X_OVERLAP = 80
 
 print("Annotating diagram....")
 for key, group in groups.items():
-    lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN)
-    for line in lines:
-        (x1, y), (x2, y) = line
-        sx1, sy1 = scale_coords(x1, y)
-        sx2, sy2 = scale_coords(x2, y)
-        line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-        line.set_colors(stroke=(0, 0, 1))
-        line.set_border(width=1)
-        line.update()
-        note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 12, color = (0, 0 ,1))
+    # lines = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_max, x_min, MAX_LEN)
+    # for line in lines:
+    #     (x1, y), (x2, y) = line
+    #     sx1, sy1 = scale_coords(x1, y)
+    #     sx2, sy2 = scale_coords(x2, y)
+    #     line = page.add_line_annot((sx1, sy1), (sx2, sy2))
+    #     line.set_colors(stroke=(0, 0, 1))
+    #     line.set_border(width=1)
+    #     line.update()
+    #     note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 12, color = (0, 0 ,1))
 
     
     # Label box indices
@@ -94,8 +99,21 @@ for key, group in groups.items():
         M = np.mean(box, axis=0)  # Compute center point
         center_x, center_y = int(M[0]), int(M[1])
         sx, sy = scale_coords(center_x, center_y)
-        note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 12, color = (1, 0 ,0))
+        note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 8, color = (1, 0 ,0))
         #writes the idx and group key
+
+        
+    # Draw rectangle
+        x1, y1 = box.min(axis=0)
+        x2, y2 = box.max(axis=0)
+        sx1, sy1 = scale_coords(x1, y1)
+        sx2, sy2 = scale_coords(x2, y2)
+        rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        shape = page.new_shape()
+        shape.draw_rect(rect)
+        shape.finish(color=(0, 0, 1), fill=None, width=0.5)
+        shape.commit()
+
 
 
 
