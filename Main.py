@@ -7,10 +7,10 @@ import Preprocessors.Grey_box_detector2 as Grey_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
-import Box_grouper as  BG
+import Box_grouper2 as  BG
 import draw_arrows as DA
 
-pdf_path = r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean - annotated.pdf"
+pdf_path = r"C:\Users\jonch\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean (1).pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
@@ -26,7 +26,7 @@ roi = get_enclosing_bounding_box(rectangles)
 img = cv2.imread("page1.png")
 
 #should only find void boxes within the part where the floor plan lies in.
-void_boxes = Void_box_detector.find_voids(img, roi, False)
+void_boxes = Void_box_detector.find_voids(img, roi)
 
 #convert rectangles to corner points
 bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
@@ -45,11 +45,11 @@ def sortingkey(banded = True):
     return top_left_sort_key
 
 # rectangles.sort(key=sortingkey())
-void_boxes.sort(key=sortingkey())
+void_boxes.sort(key=sortingkey(banded=False))
 
 # Do rectangular substraction
 remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500)
-remaining_rects.sort(key = sortingkey())
+
 
 # Group threshold for similar top y positions
 Y_THRESHOLD = 20
@@ -116,7 +116,7 @@ for key, group in groups.items():
         line.set_colors(stroke=(0.4, 0.4, 0.8))
         line.set_border(width=2)
         line.update()
-        note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 6, color = (0, 0 ,1))
+        # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 6, color = (0, 0 ,1))
 
     
     for arrow in arrows:
@@ -129,14 +129,14 @@ for key, group in groups.items():
 
 
     
-    # Label box indices
-    for idx, box in group:
-        x1, y1, x2, y2 = box
-        center_x = int((x1 + x2) / 2)
-        center_y = int((y1 + y2) / 2)
-        sx, sy = scale_coords(center_x, center_y)
+    # # Label box indices
+    # for idx, box in group:
+    #     x1, y1, x2, y2 = box
+    #     center_x = int((x1 + x2) / 2)
+    #     center_y = int((y1 + y2) / 2)
+    #     sx, sy = scale_coords(center_x, center_y)
         
-        note = page.insert_text((sx, sy), f"{idx},{key}", fontsize=8, color=(1, 0, 0))
+    #     note = page.insert_text((sx, sy), f"{idx},{key}", fontsize=8, color=(1, 0, 0))
         # Writes the idx and group key
 
         # # Draw rectangle
