@@ -3,27 +3,21 @@ import fitz  # PyMuPDF
 import numpy as np
 import math
 from collections import defaultdict
-import Preprocessors.Grey_box_detector as Grey_box_detector
+import Preprocessors.Grey_box_detector2 as Grey_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper as  BG
 import draw_arrows as DA
 
-pdf_path = r"C:\Users\jonch\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean (1).pdf"
+pdf_path = r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean - annotated.pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
 void_boxes = Void_box_detector.find_voids()
 
 #convert rectangles to corner points
-bounding_rects = []
-for box in rectangles[1:]:
-    x_coords = box[:, 0]
-    y_coords = box[:, 1]
-    x1, y1 = x_coords.min(), y_coords.min()
-    x2, y2 = x_coords.max(), y_coords.max()
-    bounding_rects.append((x1, y1, x2, y2))
+bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
 
 void_rects = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for (a, b) in void_boxes]
 
@@ -38,7 +32,7 @@ def sortingkey(banded = True):
         return (row_band, left_x)
     return top_left_sort_key
 
-rectangles.sort(key=sortingkey())
+# rectangles.sort(key=sortingkey())
 void_boxes.sort(key=sortingkey())
 
 # Do rectangular substraction
@@ -56,10 +50,11 @@ boxes = remaining_rects
 #     groups[key].append((idx + 1, box)) #box index, box
 groups = BG.group_boxes(remaining_rects, void_rects)
 
-# Use the 0-th box as horizontal span
-zero_box = rectangles[0]
-x_leftbound = min(pt[0] for pt in zero_box)
-x_rightbound = max(pt[0] for pt in zero_box)
+# Find horizontal span
+x_leftbound = min(min(x1, x2) for (x1, _, x2, _) in rectangles)
+x_rightbound = max(max(x1, x2) for (x1, _, x2, _) in rectangles)
+
+
 
 # Load the image to get dimensions
 
@@ -67,7 +62,6 @@ image = cv2.imread("contours.png")
 img_height, img_width = image.shape[:2]
 
 # Open the PDF and get page dimensions
-
 output_pdf_path = "annotated.pdf"
 doc = fitz.open(pdf_path)
 page = doc[0]
