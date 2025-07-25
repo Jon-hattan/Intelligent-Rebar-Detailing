@@ -6,12 +6,11 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
     group_rectangles = [box for _, box in group] #get boxes
 
     
-    min_x_value_forGroup = int(np.min([np.min(np.array(box)[:, 0]) for box in group_rectangles])) #smallest x value for this group
-    max_x_value_forGroup = int(np.max([np.max(np.array(box)[:, 0]) for box in group_rectangles])) #largest x value for this group
-    
-        
-    min_y_value_forGroup = int(np.min([np.min(np.array(box)[:, 1]) for box in group_rectangles]))  # smallest y
-    max_y_value_forGroup = int(np.max([np.max(np.array(box)[:, 1]) for box in group_rectangles]))  # largest y
+    min_x_value_forGroup = int(min(min(x1, x2) for x1, y1, x2, y2 in group_rectangles))  # smallest x
+    max_x_value_forGroup = int(max(max(x1, x2) for x1, y1, x2, y2 in group_rectangles))  # largest x
+
+    min_y_value_forGroup = int(min(min(y1, y2) for x1, y1, x2, y2 in group_rectangles))  # smallest y
+    max_y_value_forGroup = int(max(max(y1, y2) for x1, y1, x2, y2 in group_rectangles))  # largest y
 
 
     #if it is not the first box in the row, the line optimisation starts at the min x value, instead of the edge of the building
@@ -22,11 +21,11 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
             x_rightbound = max_x_value_forGroup
 
     # Compute the mean y-position of each rectangle
-    y_positions = [np.mean(np.array(box), axis=0)[1] for box in group_rectangles]
-    min_y = int(np.min(y_positions))  # Get minimum y-position
+    y_positions = [((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles]
+    min_y = min(y_positions)  # Get minimum y-position
 
     # Compute the center x-position of each rectangle
-    centers = sorted([int(np.mean(np.array(box)[:, 0])) for box in group_rectangles])
+    centers = sorted([int((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles])
 
     #generate all valid segments
     split_candidates = [x_leftbound] + centers + [x_rightbound]

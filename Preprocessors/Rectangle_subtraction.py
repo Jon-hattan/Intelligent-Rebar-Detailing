@@ -60,11 +60,6 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
     ax.set_aspect('equal')
     plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
     plt.show()
-    
-    filtered_boxes = [
-            [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
-            for x1, y1, x2, y2 in filtered_boxes
-        ]
 
 
     return filtered_boxes

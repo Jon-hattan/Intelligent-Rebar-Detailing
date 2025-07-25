@@ -1,9 +1,6 @@
-
-from collections import defaultdict
 import numpy as np
+from collections import defaultdict
 
-
-# Helper functions
 
 def box_bounds(box):
     if isinstance(box, np.ndarray):
@@ -20,20 +17,26 @@ def box_bounds(box):
     return min(x_coords), min(y_coords), max(x_coords), max(y_coords)
 
 
-def overlaps_vertically(box1, box2, threshold=30):
+def is_horizontally_aligned(box1, box2, threshold=30):
     _, y1_min, _, y1_max = box_bounds(box1)
     _, y2_min, _, y2_max = box_bounds(box2)
     return abs(y1_min - y2_min) <= threshold and abs(y1_max - y2_max) <= threshold
 
-def overlaps_horizontally(box1, box2, threshold=30):
+def is_vertically_adjacent(box1, box2, threshold=30):
     x1_min, y1_min, x1_max, y1_max = box_bounds(box1)
     x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
-    is_vertically_adjacent = abs(max(y1_min, y1_max)-min(y2_min,y2_max)) <= threshold or abs(min(y1_min, y1_max)-max(y2_min,y2_max)) <= threshold
-    return abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold and is_vertically_adjacent
+
+    vertical_alignment = abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold
+    vertical_gap = min(abs(y2_min - y1_max), abs(y1_min - y2_max))
+
+    return vertical_alignment and vertical_gap <= threshold
+
+
+def compute_overlap(a_min, a_max, b_min, b_max):
+        return max(0, min(a_max, b_max) - max(a_min, b_min))
 
 def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold=20):
-    def compute_overlap(a_min, a_max, b_min, b_max):
-        return max(0, min(a_max, b_max) - max(a_min, b_min))
+    
 
     x1_min, y1_min, x1_max, y1_max = box_bounds(box1)
     x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
@@ -70,55 +73,58 @@ def is_void_between(box1, box2, void_boxes, direction='right', overlap_threshold
     return False
 
 
-def group_boxes(bounding_boxes, void_boxes, min_lone_box_size = 6000):
-    
-    void_boxes.sort(key=lambda vb: (vb[1], vb[0]))  # Sort by top y, then left x
-
-    # Grouping logic
-    groups = defaultdict(list)
+def group_boxes(bounding_boxes, void_boxes, min_lone_box_size=6000):
+    sorted_boxes = sorted(enumerate(bounding_boxes), key=lambda x: box_bounds(x[1])[0])
     visited = set()
+    groups = {}
     group_id = 0
 
-    for i, box in enumerate(bounding_boxes):
+    for i, box in sorted_boxes:
         if i in visited:
             continue
         current_group = [(i, box)]
         visited.add(i)
- 
+        current_box = box
 
-        # Check rightward boxes
-        for j in range(len(bounding_boxes)):
-            if j in visited:
+        for j, candidate_box in sorted_boxes:
+            if j in visited or j == i:
                 continue
-            right_box = bounding_boxes[j]
-            if overlaps_vertically(box, right_box) and not is_void_between(box, right_box, void_boxes, direction='right'):
-                current_group.append((j, right_box))
-                visited.add(j)
-                box = right_box
+
+            # Check horizontal alignment and no void
+            if is_horizontally_aligned(current_box, candidate_box) and not is_void_between(current_box, candidate_box, void_boxes, direction='right'):
+                # Check for intervening boxes
+                x1, y1, x2, y2 = box_bounds(current_box)
+                cx1, cy1, cx2, cy2 = box_bounds(candidate_box)
+                left, right = min(x2, cx2), max(x1, cx1)
+
+                has_intervening_box = False
+                for k, other_box in sorted_boxes:
+                    if k in visited or k == i or k == j:
+                        continue
+                    ox1, oy1, ox2, oy2 = box_bounds(other_box)
+                    if left <= ox1 <= right and compute_overlap(oy1, oy2, cy1, cy2) > 0 and compute_overlap(y1, y2, oy1, oy2) > 0:
+                        has_intervening_box = True
+                        break
+
+                if not has_intervening_box:
+                    current_group.append((j, candidate_box))
+                    visited.add(j)
+                    current_box = candidate_box
+                else:
+                    break  # Stop grouping if blocked by another box
             else:
                 break
 
-        # # If no horizontal grouping, check downward
-        # if len(current_group) == 1:
-        #     for j in range(len(bounding_boxes)):
-        #         if j in visited:
-        #             continue
-        #         below_box = bounding_boxes[j]
-        #         if overlaps_horizontally(box, below_box) and not is_void_between(box, below_box, void_boxes, direction='below'):
-        #             current_group.append((j, below_box))
-        #             visited.add(j)
-        #             box = below_box
-        #         else:
-        #             break
-        
-        #filter out small single member groups
+        # Filter out small lone boxes
         if len(current_group) == 1:
-            lone_box = current_group[0][1]
-            x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
-            area = (x1_max - x1_min) * (y1_max - y1_min)
+            x1, y1, x2, y2 = box_bounds(current_group[0][1])
+            area = (x2 - x1) * (y2 - y1)
             if area < min_lone_box_size:
                 continue
 
         groups[group_id] = current_group
         group_id += 1
+
     return groups
+
+

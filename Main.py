@@ -30,17 +30,17 @@ void_boxes = Void_box_detector.find_voids(img, roi, False)
 
 #convert rectangles to corner points
 bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
-
-void_rects = [(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1])) for (a, b) in void_boxes]
+void_rects = void_boxes #in the form of 4 (x1, y1, x2, y2)
 
 
 
 # Sort rectangles by top-left position
 def sortingkey(banded = True):
     def top_left_sort_key(box):
-        top_y = min(point[1] for point in box)
-        left_x = min(point[0] for point in box)
-        row_band = round(top_y / 75) if banded else top_y
+        x1, y1, x2, y2 = box
+        top_y = min(y1, y2)
+        left_x = min(x1, x2)
+        row_band = round(top_y / 100) if banded else top_y
         return (row_band, left_x)
     return top_left_sort_key
 
@@ -70,7 +70,7 @@ x_rightbound = max(max(x1, x2) for (x1, _, x2, _) in rectangles)
 
 # Load the image to get dimensions
 
-image = cv2.imread("page1.png")
+image = img
 img_height, img_width = image.shape[:2]
 
 # Open the PDF and get page dimensions
@@ -128,39 +128,38 @@ for key, group in groups.items():
 
 
 
+    
     # Label box indices
     for idx, box in group:
-        box = np.array(box)  # Ensure it's a NumPy array
-        M = np.mean(box, axis=0)  # Compute center point
-        center_x, center_y = int(M[0]), int(M[1])
+        x1, y1, x2, y2 = box
+        center_x = int((x1 + x2) / 2)
+        center_y = int((y1 + y2) / 2)
         sx, sy = scale_coords(center_x, center_y)
-        note = page.insert_text((sx, sy), str(idx) + "," + str(key), fontsize = 8, color = (1, 0 ,0))
-        #writes the idx and group key
-
         
-    # Draw rectangle
-        x1, y1 = box.min(axis=0)
-        x2, y2 = box.max(axis=0)
-        sx1, sy1 = scale_coords(x1, y1)
-        sx2, sy2 = scale_coords(x2, y2)
-        rect = fitz.Rect(sx1, sy1, sx2, sy2)
-        shape = page.new_shape()
-        shape.draw_rect(rect)
-        shape.finish(color=(0, 0, 1), fill=None, width=0.5)
-        shape.commit()
+        note = page.insert_text((sx, sy), f"{idx},{key}", fontsize=8, color=(1, 0, 0))
+        # Writes the idx and group key
+
+        # # Draw rectangle
+        # sx1, sy1 = scale_coords(x1, y1)
+        # sx2, sy2 = scale_coords(x2, y2)
+        # rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        
+        # shape = page.new_shape()
+        # shape.draw_rect(rect)
+        # shape.finish(color=(0, 0, 1), fill=None, width=0.5)
+        # shape.commit()
 
 
 
-
-# Draw rectangles around all void_rects
-for x1, y1, x2, y2 in void_rects:
-    sx1, sy1 = scale_coords(x1, y1)
-    sx2, sy2 = scale_coords(x2, y2)
-    rect = fitz.Rect(sx1, sy1, sx2, sy2)
-    shape = page.new_shape()
-    shape.draw_rect(rect)
-    shape.finish(color=(1, 0, 0), fill=None, width=0.5)  # Red outline for voids
-    shape.commit()
+# # Draw rectangles around all void_rects
+# for x1, y1, x2, y2 in void_rects:
+#     sx1, sy1 = scale_coords(x1, y1)
+#     sx2, sy2 = scale_coords(x2, y2)
+#     rect = fitz.Rect(sx1, sy1, sx2, sy2)
+#     shape = page.new_shape()
+#     shape.draw_rect(rect)
+#     shape.finish(color=(1, 0, 0), fill=None, width=0.5)  # Red outline for voids
+#     shape.commit()
 
 
 

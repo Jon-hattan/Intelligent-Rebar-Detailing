@@ -149,8 +149,10 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     offset_lines = []
     for (x1_, y1_), (x2_, y2_) in merged_rectangles:
         offset_lines.append((
-            (x1_ + roi_offset[0], y1_ + roi_offset[1]),
-            (x2_ + roi_offset[0], y2_ + roi_offset[1])
+            x1_ + roi_offset[0], 
+            y1_ + roi_offset[1],
+            x2_ + roi_offset[0], 
+            y2_ + roi_offset[1]
         ))
 
     return offset_lines
@@ -165,8 +167,8 @@ def find_voids(img, roi, detect_mediums = True):
     void_boxes.extend(find_void_boxes_withSize(img, roi)) #Big size boxes
 
     output = img.copy()
-    for (a, b) in void_boxes:
-        cv2.rectangle(output, a, b, (0,0,255), 2)
+    for x1, y1, x2, y2 in void_boxes:
+        cv2.rectangle(output, (x1,y1), (x2,y2), (0,0,255), 2)
     cv2.imwrite('merged_voids.png', output)
 
     return void_boxes
