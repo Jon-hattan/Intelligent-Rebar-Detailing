@@ -14,7 +14,19 @@ pdf_path = r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Cl
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
-void_boxes = Void_box_detector.find_voids()
+
+
+def get_enclosing_bounding_box(lines):
+    points = np.array([[x, y] for line in lines for x, y in [(line[0], line[1]), (line[2], line[3])]])
+    min_x, min_y = points.min(axis=0)
+    max_x, max_y = points.max(axis=0)
+    return (min_x, min_y), (max_x, max_y)
+
+roi = get_enclosing_bounding_box(rectangles)
+img = cv2.imread("page1.png")
+
+#should only find void boxes within the part where the floor plan lies in.
+void_boxes = Void_box_detector.find_voids(img, roi, False)
 
 #convert rectangles to corner points
 bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
@@ -28,7 +40,7 @@ def sortingkey(banded = True):
     def top_left_sort_key(box):
         top_y = min(point[1] for point in box)
         left_x = min(point[0] for point in box)
-        row_band = round(top_y / 100) if banded else top_y
+        row_band = round(top_y / 75) if banded else top_y
         return (row_band, left_x)
     return top_left_sort_key
 
@@ -58,7 +70,7 @@ x_rightbound = max(max(x1, x2) for (x1, _, x2, _) in rectangles)
 
 # Load the image to get dimensions
 
-image = cv2.imread("contours.png")
+image = cv2.imread("page1.png")
 img_height, img_width = image.shape[:2]
 
 # Open the PDF and get page dimensions

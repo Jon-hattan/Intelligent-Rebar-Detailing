@@ -93,7 +93,7 @@ def find_grey_contours(img):
     cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_CLOSE, merge_kernel)
 
     kernel = np.ones((5, 5), np.uint8)
-    dilated = cv2.dilate(cleaned, kernel, iterations=2)
+    dilated = cv2.dilate(cleaned, kernel, iterations=1)
     closed = cv2.erode(dilated, kernel, iterations=2)
 
     cleaned = cv2.GaussianBlur(closed, (5,5), 0)
@@ -320,5 +320,5 @@ def find_bounding_boxes(pdf_path):
 
 
 
-#find_bounding_boxes(r"C:\Users\CHEWJ1\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean - annotated.pdf")
+#find_bounding_boxes(r"C:\Users\CHEWJ1\Downloads\131101-WIP12-DR-S-5123 & 5124_commented_20250414 1 (1).pdf")
 

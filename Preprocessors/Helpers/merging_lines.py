@@ -33,6 +33,9 @@ def merge_line_group(group):
     return [x1, y1, x2, y2]
 
 def efficient_merge_lines(lines, angle_thresh=5, dist_thresh=20):
+    if len(lines) == 0:
+        return []
+    
     used = [False] * len(lines)
     merged = []
 
@@ -81,6 +84,9 @@ def merge_lines_collinear(l1, l2):
     return [*points[idx_min], *points[idx_max]]
 
 def merge_all_colinear_lines(lines, angle_thresh=1, dist_thresh=20):
+    if len(lines) == 0:
+        return []
+
     merged = []
     used = [False] * len(lines)
     

@@ -6,33 +6,30 @@ from Preprocessors.Helpers import merging_lines as merge
 from Preprocessors.Helpers import bounding_boxes as bb
 from Preprocessors.Helpers import dotted_lines_check as dotted
 
-def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
-    
-    #------------------------------------------------------------------------------------
+def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
-    # FIND VOID BOXES -- DOTTED LINE BOXES WITH DOTTED CROSS DIAGONALS
-
-    # -------- STEP 1: Load Image and Initialize Parameters --------
-    # Load the image
-
-    size_limit = 30 #if size upper is lower than this, don't erode lines or filter out small contours --> it will over-thin and filter out the relevant lines.
-    size = "large" if size_upper > size_limit else "medium" 
+    size_limit = 30
+    size = "large" if size_upper > size_limit else "medium"
     print(f"\nFinding {size} void boxes....\n")
 
     anglethresh = 2
     regularity_threshold = 10
     transition_threshold = 2
-    length_threshold_high = size_upper  # adjust this as needed
+    length_threshold_high = size_upper
     length_threshold_low = size_lower
-
     hough_threshold = 60 if size_upper > size_limit else 20
 
-
-    img = cv2.imread('page1.png')
     output = img.copy()
 
+    # Apply ROI cropping if specified
+    if roi:
+        (x1, y1), (x2, y2) = roi
+        img = img[y1:y2, x1:x2]
+        roi_offset = (x1, y1)
+    else:
+        roi_offset = (0, 0)
 
-    # -------- STEP 1: Image Processing --------
+     # -------- STEP 1: Image Processing --------
     # Convert to grayscale, and get a binary image, and erode
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(imgGray, 130, 255, cv2.THRESH_BINARY_INV)
@@ -147,17 +144,26 @@ def find_void_boxes_withSize(size_upper = 150, size_lower = 10):
     # Save the result
     #cv2.imwrite('merged_voids.png', output_image)
 
-    return merged_rectangles 
+
+    # Offset merged lines back to original image coordinates
+    offset_lines = []
+    for (x1_, y1_), (x2_, y2_) in merged_rectangles:
+        offset_lines.append((
+            (x1_ + roi_offset[0], y1_ + roi_offset[1]),
+            (x2_ + roi_offset[0], y2_ + roi_offset[1])
+        ))
+
+    return offset_lines
 
 
-def find_voids(detect_mediums = True):
+
+def find_voids(img, roi, detect_mediums = True):
     if detect_mediums:
-        void_boxes = find_void_boxes_withSize(20, 0) #Medium size
+        void_boxes = find_void_boxes_withSize(img, roi, 20, 0) #Medium size
     else:
         void_boxes = []
-    void_boxes.extend(find_void_boxes_withSize()) #Big size boxes
+    void_boxes.extend(find_void_boxes_withSize(img, roi)) #Big size boxes
 
-    img = cv2.imread('page1.png')
     output = img.copy()
     for (a, b) in void_boxes:
         cv2.rectangle(output, a, b, (0,0,255), 2)
