@@ -97,10 +97,9 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     max_line_gap = 150 if size_upper > size_limit else 5
     resolution = 360
     h_threshold = 150 if size_upper > size_limit else 50
+
     lines = cv2.HoughLinesP(dotted_mask, 1, np.pi/360, threshold=h_threshold, minLineLength=smallest_line_length, maxLineGap=max_line_gap)
-    
-    # else:
-    #     lines = [(_, 0) for _ in dotted_lines]
+    lines = [] if lines is None else lines
 
     # Merge lines that are similar or collinear.
     merged_lines = merge.efficient_merge_lines(lines)
