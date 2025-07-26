@@ -10,7 +10,7 @@ import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper2 as  BG
 import draw_arrows as DA
 
-pdf_path = r"C:\Users\jonch\Downloads\SFL15.6 Switchroom Slab Reinforcements Clean (1).pdf"
+pdf_path = r"C:\Users\jonch\Downloads\131101-WIP12-DR-S-5123 & 5124_commented_20250414 1 (1).pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
