@@ -77,7 +77,7 @@ def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=2):
 #     x = x_start + (height // 5) * x_gap
 #     y1 = 100
 #     y2 = y1 + height
-#     draw_vertical_arrow(page, x, y1, y2)
+#     draw_vertical_arrow(page, x, y1, y2, line_color = (0.75, 0.25, 0.75))
 
 # # Save the PDF
 # output_path = "varying_arrow_sizes.pdf"

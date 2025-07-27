@@ -21,9 +21,16 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
 
     # Apply decomposition and merging
     resulting_rectangles = []
-    for poly in remaining_polys:
-        resulting_rectangles.extend(vertical_band_decomposition(poly))
-    merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+    if direction == "horizontal":
+        for poly in remaining_polys:
+            resulting_rectangles.extend(vertical_band_decomposition(poly))
+        merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+    elif direction == "vertical":
+        for poly in remaining_polys:
+            resulting_rectangles.extend(horizontal_band_decomposition(poly))
+        merged_rectangles = merge_horizontal_rectangles(resulting_rectangles)
+
+    
     
     #Split lines 
     if direction == "horizontal":
@@ -33,7 +40,7 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
         
     elif direction == "vertical":
         split_lines_vertical = generate_split_lines(void_boxes, direction="vertical")
-        split_lines_vertical = merge_similar_lines(split_lines_vertical)
+        #split_lines_vertical = merge_similar_lines(split_lines_vertical)
         split_boxes = split_boxes_by_lines(merged_rectangles, split_lines_vertical, direction="vertical")
 
     
@@ -104,6 +111,31 @@ def vertical_band_decomposition(poly):
             y += 1
     return rectangles
 
+
+
+def horizontal_band_decomposition(poly):
+    rectangles = []
+    if poly.is_empty:
+        return rectangles
+    polys = [poly] if poly.geom_type == 'Polygon' else list(poly.geoms)
+    for p in polys:
+        minx, miny, maxx, maxy = p.bounds
+        x = int(minx)
+        while x < int(maxx):
+            band = box(x, miny, x + 1, maxy)
+            intersection = p.intersection(band)
+            if intersection.is_empty:
+                x += 1
+                continue
+            if intersection.geom_type == 'Polygon':
+                rectangles.append(intersection.bounds)
+            elif intersection.geom_type == 'MultiPolygon':
+                for part in intersection.geoms:
+                    rectangles.append(part.bounds)
+            x += 1
+    return rectangles
+
+
 # Merge adjacent rectangles with same x1, x2 and y continuity
 def merge_vertical_rectangles(rects, epsilon=10):
     from collections import defaultdict
@@ -123,8 +155,26 @@ def merge_vertical_rectangles(rects, epsilon=10):
         merged.append((x1, start_y, x2, end_y))
     return merged
 
+# Merge adjacent rectangles with same y1, y2 and x continuity
+def merge_horizontal_rectangles(rects, epsilon=10):
+    grouped = defaultdict(list)
+    for x1, y1, x2, y2 in rects:
+        grouped[(y1, y2)].append((x1, x2))
+    merged = []
+    for (y1, y2), x_ranges in grouped.items():
+        x_ranges.sort()
+        start_x, end_x = x_ranges[0]
+        for x1, x2 in x_ranges[1:]:
+            if abs(x1 - end_x) < epsilon:
+                end_x = x2
+            else:
+                merged.append((start_x, y1, end_x, y2))
+                start_x, end_x = x1, x2
+        merged.append((start_x, y1, end_x, y2))
+    return merged
 
-def split_boxes_by_lines(boxes, lines, direction = "horizontal"):
+
+def split_boxes_by_lines(boxes, lines, direction):
     result = []
     if direction == "horizontal":
         for box in boxes:
@@ -153,7 +203,7 @@ def split_boxes_by_lines(boxes, lines, direction = "horizontal"):
 
 
 # Define a function to generate split lines from void boxes
-def generate_split_lines(void_boxes, direction = "horizontal"):
+def generate_split_lines(void_boxes, direction):
     split_lines = []
 
     if direction == "horizontal":
@@ -196,7 +246,7 @@ def generate_split_lines(void_boxes, direction = "horizontal"):
                 # Extend upward
                 y_top = y_min
                 while True:
-                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[3] <= y_top]
+                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[1] < y_top]
                     if not blocking:
                         y_start = float('-inf')
                         break
@@ -208,7 +258,7 @@ def generate_split_lines(void_boxes, direction = "horizontal"):
                 # Extend downward
                 y_bottom = y_max
                 while True:
-                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[1] >= y_bottom]
+                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[3] >= y_bottom]
                     if not blocking:
                         y_end = float('inf')
                         break

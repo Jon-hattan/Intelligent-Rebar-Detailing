@@ -89,16 +89,19 @@ def check_void_between_vertical(current_box, next_box, void_boxes):
     return False
 
 
-def is_vertically_adjacent(box1, box2, threshold=30):
-    x1_min, y1_min, x1_max, y1_max = box_bounds(box1)
-    x2_min, y2_min, x2_max, y2_max = box_bounds(box2)
+def is_vertically_adjacent(box1, box2, threshold=50):
+    x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
+    y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
+    
+    x2_min, x2_max = min(box2[0], box2[2]), max(box2[0], box2[2])
+    y2_min, y2_max = min(box2[1], box2[3]), max(box2[1], box2[3])
 
     vertical_alignment = abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold
     vertical_gap = min(abs(y2_min - y1_max), abs(y1_min - y2_max))
 
     return vertical_alignment and vertical_gap <= threshold
 
-def is_horizontally_adjacent(box1, box2, threshold=30):
+def is_horizontally_adjacent(box1, box2, threshold=50):
     # Ensure proper min/max ordering
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
     y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
@@ -141,7 +144,7 @@ def group_boxes_horizontal(boxes, void_boxes, min_lone_box_size=4000):
             x_next1, _, x_next2, _ = box_bounds(next_box)
             x_curr2 = box_bounds(current_box)[2]
 
-            if x_next1 < x_curr2:
+            if x_next1 - x_curr2 < -30 :
                 continue
 
             y1_min, y1_max = box_bounds(current_box)[1], box_bounds(current_box)[3]
@@ -200,10 +203,10 @@ def group_boxes_vertical(boxes, void_boxes, min_lone_box_size=4000):
                 continue
 
             next_box = boxes[j]
-            y_next1, _, y_next2, _ = box_bounds(next_box)
+            _, y_next1, _, y_next2 = box_bounds(next_box)
             y_curr2 = box_bounds(current_box)[3]
 
-            if y_next1 < y_curr2:
+            if y_next1 - y_curr2 < -30:
                 continue
 
             x1_min, x1_max = box_bounds(current_box)[0], box_bounds(current_box)[2]
