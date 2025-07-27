@@ -10,7 +10,7 @@ import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper2 as  BG
 import draw_arrows as DA
 
-pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
+pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
@@ -48,28 +48,24 @@ def sortingkey(banded = True):
 void_boxes.sort(key=sortingkey(banded=False))
 
 # Do rectangular substraction
-remaining_rects = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500)
+remaining_rects_horizontal = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
+remaining_rects_vertical = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
 
 
 # Group threshold for similar top y positions
-Y_THRESHOLD = 20
-boxes = remaining_rects
+groups_horizontal = BG.group_boxes(remaining_rects_horizontal, void_rects, direction = "horizontal")
+groups_vertical = BG.group_boxes(remaining_rects_vertical, void_rects, direction = "vertical")
 
-# groups = defaultdict(list) #maps the groups to the (box index, box)
-# for idx, box in enumerate(boxes):
-#     top_y = min(point[1] for point in box)
-#     key = round(top_y / Y_THRESHOLD)
-#     groups[key].append((idx + 1, box)) #box index, box
-groups = BG.group_boxes(remaining_rects, void_rects)
-
-# Find horizontal span
+# Find horizontal and vertical span
 x_leftbound = min(min(x1, x2) for (x1, _, x2, _) in rectangles)
 x_rightbound = max(max(x1, x2) for (x1, _, x2, _) in rectangles)
+y_topbound = min(min(y1, y2) for (_, y1, _, y2) in rectangles)
+y_bottombound = max(max(y1, y2) for (_, y1, _, y2) in rectangles)
+
 
 
 
 # Load the image to get dimensions
-
 image = img
 img_height, img_width = image.shape[:2]
 
@@ -87,36 +83,46 @@ def scale_coords(x, y):
 MAX_LEN = 2500
 Y_OFFSET = 6
 X_OVERLAP = 40
+X_OFFSET = 6
+Y_OVERLAP = 40
 
 def get_rect_x_range(rects): #find the lowest and highest x values for the boxes
     x_values = [x for rect in rects for x in (rect[0], rect[2])]
     return min(x_values), max(x_values)
 
+def get_rect_y_range(rects):  # find the lowest and highest y values for the boxes
+    y_values = [y for rect in rects for y in (rect[1], rect[3])]
+    return min(y_values), max(y_values)
+
 x_min, x_max = get_rect_x_range(bounding_rects) #the minimum x and max x for the rectangles
+y_min, y_max = get_rect_y_range(bounding_rects)  # the minimum y and max y for the rectangles
 
 print("\nAnnotating diagram....")
 last_percent = -1 #initialize variable for progress printing
 
-for key, group in groups.items():
+
+
+#PROCESS HORIZONTAL AXIS FIRST
+horizontal_color = (0.4, 0.8, 0.8)
+for key_h, group in groups_horizontal.items():
 
     #percentage completion tracking
-    percent = (100*key//len(groups))
+    percent = (100*key_h//(len(groups_horizontal)+len(groups_vertical)))
     if percent % 20 == 0 and percent != last_percent:
         print(f"Progress: {percent}% complete")
         last_percent = percent
     
-
-    lines, arrows = OL.find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
+    lines, arrows = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
 
     for line in lines:
         (x1, y), (x2, y) = line
         sx1, sy1 = scale_coords(x1, y)
         sx2, sy2 = scale_coords(x2, y)
         line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-        line.set_colors(stroke=(0.4, 0.4, 0.8))
+        line.set_colors(stroke=horizontal_color)
         line.set_border(width=2)
         line.update()
-        # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key), fontsize = 6, color = (0, 0 ,1))
+        # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key_h), fontsize = 6, color = (0, 0 ,1))
 
     
     for arrow in arrows:
@@ -124,7 +130,38 @@ for key, group in groups.items():
         sx, sy1 = scale_coords(x, y1)
         _, sy2 = scale_coords(x, y2)
 
-        DA.draw_vertical_arrow(page, sx, sy1, sy2, (0.4, 0.4, 0.8))
+        DA.draw_vertical_arrow(page, sx, sy1, sy2, horizontal_color)
+
+#PROCESS VERTICAL AXIS 
+vertical_color = (0.8, 0.4, 0.8)
+for key_v, group in groups_vertical.items():
+
+    # percentage completion tracking
+    percent = (100 * (key_v + key_h) // (len(groups_horizontal)+len(groups_vertical)))
+    if percent % 20 == 0 and percent != last_percent:
+        print(f"Progress: {percent}% complete")
+        last_percent = percent
+
+    # Find vertical lines and horizontal arrows
+    lines, arrows = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
+
+    for line in lines:
+        (x, y1), (x, y2) = line
+        sx, sy1 = scale_coords(x, y1)
+        _, sy2 = scale_coords(x, y2)
+        line = page.add_line_annot((sx, sy1), (sx, sy2))
+        line.set_colors(stroke=vertical_color)
+        line.set_border(width=2)
+        line.update()
+        # note = page.insert_text((sx, 0.5*(sy1 + sy2)), str(key_v), fontsize=6, color=(0, 0, 1))
+
+    for arrow in arrows:
+        (x1, y), (x2, _) = arrow
+        sx1, sy = scale_coords(x1, y)
+        sx2, _ = scale_coords(x2, y)
+
+        DA.draw_horizontal_arrow(page, sx1, sy, sx2, vertical_color)
+
 
 
 
@@ -148,6 +185,14 @@ for key, group in groups.items():
         # shape.draw_rect(rect)
         # shape.finish(color=(0, 0, 1), fill=None, width=0.5)
         # shape.commit()
+
+
+
+
+
+
+
+
 
 
 

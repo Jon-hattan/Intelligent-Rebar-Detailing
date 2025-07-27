@@ -2,7 +2,7 @@ import numpy as np
 from collections import defaultdict
 
 
-def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN):
+def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN):
     group_rectangles = [box for _, box in group] #get boxes
 
     
@@ -77,3 +77,58 @@ def find_optimal_lines(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_
     return lines, arrows
 
 
+
+def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN):
+    group_rectangles = [box for _, box in group]
+
+    min_y_value_forGroup = int(min(min(y1, y2) for x1, y1, x2, y2 in group_rectangles))
+    max_y_value_forGroup = int(max(max(y1, y2) for x1, y1, x2, y2 in group_rectangles))
+    min_x_value_forGroup = int(min(min(x1, x2) for x1, y1, x2, y2 in group_rectangles))
+    max_x_value_forGroup = int(max(max(x1, x2) for x1, y1, x2, y2 in group_rectangles))
+
+    if abs(min_y_value_forGroup - y_min) > 30:
+        y_topbound = min_y_value_forGroup
+    if abs(max_y_value_forGroup - y_max) > 30:
+        y_bottombound = max_y_value_forGroup
+
+    x_positions = [((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles]
+    min_x = min(x_positions)
+
+    centers = sorted([int((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles])
+    split_candidates = [y_topbound] + centers + [y_bottombound]
+
+    segments = []
+    for i in range(len(split_candidates) - 1):
+        y1 = split_candidates[i]
+        for j in range(i + 1, len(split_candidates)):
+            y2 = split_candidates[j]
+            if y2 - y1 <= MAX_LEN:
+                segments.append((y1, y2))
+            else:
+                break
+
+    dp = defaultdict(lambda: (-1, []))
+    dp[y_topbound] = (float('inf'), [y_topbound])
+
+    for y1, y2 in segments:
+        if y1 in dp:
+            min_len, path = dp[y1]
+            new_min = min(min_len, y2 - y1)
+            if new_min > dp[y2][0]:
+                dp[y2] = (new_min, path + [y2])
+
+    _, best_path = dp[y_bottombound]
+
+    lines = []
+    arrows = []
+    for i in range(len(best_path) - 1):
+        y1 = best_path[i] - Y_OVERLAP if best_path[i] != y_topbound else best_path[i]
+        y2 = best_path[i + 1] + Y_OVERLAP if best_path[i + 1] != y_bottombound else best_path[i + 1]
+
+        x = min_x + ((-1) ** i) * X_OFFSET
+        lines.append(((x, y1), (x, y2)))
+
+        mid_y = 0.5 * (y1 + y2)
+        arrows.append(((min_x_value_forGroup, mid_y), (max_x_value_forGroup, mid_y)))
+
+    return lines, arrows
