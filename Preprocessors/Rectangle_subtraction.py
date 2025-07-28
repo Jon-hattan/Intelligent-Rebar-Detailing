@@ -25,29 +25,32 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
         for poly in remaining_polys:
             resulting_rectangles.extend(vertical_band_decomposition(poly))
         merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+        
+        #split boxes
+        bounding_lines = [(y, float('-inf'), float('inf')) for _, y1, _, y2 in merged_rectangles for y in (y1, y2)]
+        void_lines = generate_split_lines(void_boxes, direction="horizontal")
+        split_lines_horizontal = void_lines
+        split_lines_horizontal = merge_similar_lines(split_lines_horizontal)
+        merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_horizontal, direction="horizontal")
+
     elif direction == "vertical":
         for poly in remaining_polys:
             resulting_rectangles.extend(horizontal_band_decomposition(poly))
         merged_rectangles = merge_horizontal_rectangles(resulting_rectangles)
 
-    
-    
-    #Split lines 
-    if direction == "horizontal":
-        split_lines_horizontal = generate_split_lines(void_boxes, direction="horizontal")
-        split_lines_horizontal = merge_similar_lines(split_lines_horizontal)
-        split_boxes = split_boxes_by_lines(merged_rectangles, split_lines_horizontal, direction="horizontal")
-        
-    elif direction == "vertical":
-        split_lines_vertical = generate_split_lines(void_boxes, direction="vertical")
-        #split_lines_vertical = merge_similar_lines(split_lines_vertical)
-        split_boxes = split_boxes_by_lines(merged_rectangles, split_lines_vertical, direction="vertical")
+        #split boxes
+        bounding_lines = [(x, float('-inf'), float('inf')) for x1, _, x2, _ in merged_rectangles for x in (x1, x2)]
+        void_lines = generate_split_lines(void_boxes, direction="vertical")
+        split_lines_vertical = void_lines
+        split_lines_vertical = merge_similar_lines(split_lines_vertical)
+        merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_vertical, direction="vertical")
+
 
     
     
     #Filter out small rectangles
     filtered_boxes = [
-        rect for rect in split_boxes
+        rect for rect in merged_rectangles
         if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height and (rect[2] - rect[0])*(rect[3] - rect[1]) >= min_area
     ]
 
@@ -137,7 +140,7 @@ def horizontal_band_decomposition(poly):
 
 
 # Merge adjacent rectangles with same x1, x2 and y continuity
-def merge_vertical_rectangles(rects, epsilon=10):
+def merge_vertical_rectangles(rects, epsilon=50):
     from collections import defaultdict
     grouped = defaultdict(list)
     for x1, y1, x2, y2 in rects:

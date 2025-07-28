@@ -4,13 +4,13 @@ import numpy as np
 import math
 from collections import defaultdict
 import Preprocessors.Grey_box_detector2 as Grey_box_detector
-import Preprocessors.Void_box_detector as Void_box_detector
+import Preprocessors.Void_box_detector2 as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper2 as  BG
 import draw_arrows as DA
 
-pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
+pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
@@ -26,7 +26,8 @@ roi = get_enclosing_bounding_box(rectangles)
 img = cv2.imread("page1.png")
 
 #should only find void boxes within the part where the floor plan lies in.
-void_boxes = Void_box_detector.find_voids(img, roi)
+# void_boxes = Void_box_detector.find_voids(img, roi)
+void_boxes = Void_box_detector.find_voids(img)
 
 #convert rectangles to corner points
 bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
@@ -163,6 +164,7 @@ for key_v, group in groups_vertical.items():
 
     # percentage completion tracking
     percent = (100 * (key_v + key_h) // (len(groups_horizontal)+len(groups_vertical)))
+    print(percent)
     if percent % 20 == 0 and percent != last_percent:
         print(f"Progress: {percent}% complete")
         last_percent = percent
@@ -187,7 +189,25 @@ for key_v, group in groups_vertical.items():
 
         DA.draw_horizontal_arrow(page, sx1, sy, sx2, vertical_color)
 
+    # # # Label box indices
+    # for idx, box in group:
+    #     x1, y1, x2, y2 = box
+    #     center_x = int((x1 + x2) / 2)
+    #     center_y = int((y1 + y2) / 2)
+    #     sx, sy = scale_coords(center_x, center_y)
+        
+    #     note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
+    #     # Writes the idx and group key
 
+    #     # Draw rectangle
+    #     sx1, sy1 = scale_coords(x1, y1)
+    #     sx2, sy2 = scale_coords(x2, y2)
+    #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        
+    #     shape = page.new_shape()
+    #     shape.draw_rect(rect)
+    #     shape.finish(color=(0, 1, 0), fill=None, width=0.5)
+    #     shape.commit()
 
 
 
