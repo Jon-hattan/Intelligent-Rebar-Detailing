@@ -3,40 +3,33 @@ import fitz  # PyMuPDF
 # Function to draw a triangle arrowhead
 
 
-def draw_arrowhead(annot, page, tip, direction='up', size=10, color=(1, 0, 0), width=1, opacity=1.0):
-    x, y = tip
-    if size > 10:
-        if direction in ['up', 'left']:
-            annot.set_line_ends(5, 0)  # arrowhead at start
-        elif direction in ['down', 'right']:
-            annot.set_line_ends(0, 5)  # arrowhead at end
-        annot.update()
+def draw_arrowhead(annot, page, tip, direction='up', size=10, color=(1, 0, 0), line_width=10, opacity=1.0):
+    x,y = tip
+    if direction == 'up':
+        p1 = (x, y)
+        p2 = (x - size / 2, y + size)
+        p3 = (x + size / 2, y + size)
+    elif direction == 'down':
+        p1 = (x, y)
+        p2 = (x - size / 2, y - size)
+        p3 = (x + size / 2, y - size)
+    elif direction == 'left':
+        p1 = (x, y)
+        p2 = (x + size, y - size / 2)
+        p3 = (x + size, y + size / 2)
+    elif direction == 'right':
+        p1 = (x, y)
+        p2 = (x - size, y - size / 2)
+        p3 = (x - size, y + size / 2)
     else:
-        if direction == 'up':
-            p1 = (x, y)
-            p2 = (x - size / 2, y + size)
-            p3 = (x + size / 2, y + size)
-        elif direction == 'down':
-            p1 = (x, y)
-            p2 = (x - size / 2, y - size)
-            p3 = (x + size / 2, y - size)
-        elif direction == 'left':
-            p1 = (x, y)
-            p2 = (x + size, y - size / 2)
-            p3 = (x + size, y + size / 2)
-        elif direction == 'right':
-            p1 = (x, y)
-            p2 = (x - size, y - size / 2)
-            p3 = (x - size, y + size / 2)
-        else:
-            raise ValueError("Direction must be 'up', 'down', 'left', or 'right'")
+        raise ValueError("Direction must be 'up', 'down', 'left', or 'right'")
 
-        for start, end in [(p1, p2), (p2, p3), (p3, p1)]:
-            triangle = page.add_line_annot(start, end)
-            triangle.set_colors(stroke=color)
-            triangle.set_border(width=width)
-            triangle.set_opacity(opacity)
-            triangle.update()
+    for start, end in [(p1, p2), (p2, p3), (p3, p1)]:
+        triangle = page.add_line_annot(start, end)
+        triangle.set_colors(stroke=color)
+        triangle.set_border(width=line_width)
+        triangle.set_opacity(opacity)
+        triangle.update()
 
 
 
@@ -64,7 +57,7 @@ def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=2):
 
 
 
-# # Example usage: draw arrows of varying size from 10 to 500
+# # # Example usage: draw arrows of varying size from 10 to 500
 
 # # Create a new blank PDF
 # doc = fitz.open()

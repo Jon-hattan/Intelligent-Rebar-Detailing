@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 def find_voids(image):
-    
+
     if image is None:
         raise ValueError("Image not found or unable to load.")
 
@@ -31,7 +31,8 @@ def find_voids(image):
 
         if len(approx) == 4 and cv2.isContourConvex(approx):
             x, y, w, h = cv2.boundingRect(approx)
-            red_boxes.append((x, y, x + w, y + h))
+            if w>15 and h>15:
+                red_boxes.append((x, y, x + w, y + h))
 
     return red_boxes
 
