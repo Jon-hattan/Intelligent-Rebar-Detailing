@@ -3,3 +3,4 @@ __pycache__/
 # Output files
 *.png
 *.pdf
+*.txt

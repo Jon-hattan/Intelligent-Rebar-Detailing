@@ -89,7 +89,7 @@ def check_void_between_vertical(current_box, next_box, void_boxes):
     return False
 
 
-def is_vertically_adjacent(box1, box2, threshold=50):
+def is_vertically_adjacent(box1, box2, threshold=10):
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
     y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
     
@@ -101,7 +101,7 @@ def is_vertically_adjacent(box1, box2, threshold=50):
 
     return vertical_alignment and vertical_gap <= threshold
 
-def is_horizontally_adjacent(box1, box2, threshold=50):
+def is_horizontally_adjacent(box1, box2, threshold=10):
     # Ensure proper min/max ordering
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
     y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
@@ -228,12 +228,12 @@ def group_boxes_vertical(boxes, void_boxes, min_lone_box_size=4000):
             current_box = next_box
 
         #filter out small single member groups
-        if len(group) == 1:
-            lone_box = group[0][1]
-            x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
-            area = (x1_max - x1_min) * (y1_max - y1_min)
-            if area < min_lone_box_size:
-                continue
+        # if len(group) == 1:
+        #     lone_box = group[0][1]
+        #     x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
+        #     area = (x1_max - x1_min) * (y1_max - y1_min)
+        #     if area < min_lone_box_size:
+        #         continue
 
         grouped[group_id] = group
         group_id+=1
@@ -249,51 +249,63 @@ def compute_group_bounds(group):
     y_max = max(box[3] for _, box in group)
     return (x_min, y_min, x_max, y_max)
 
+
+
 def merge_box_vertical(grouped): #merge the groups by vertical alignment
-    group_bounds = {gid: compute_group_bounds(group) for gid, group in grouped.items()}
+
     merged = defaultdict(list)
-    used = set()
-    new_group_id = 0
+    used = {} #maps old group_id to new group_id
+    new_group_id = -1
 
-    group_ids = sorted(grouped.keys(), key=lambda gid: group_bounds[gid][1])  # sort by y_min
+    group_ids = sorted(grouped.keys(), key=lambda gid: compute_group_bounds(grouped[gid])[1])  # sort by y_min
 
-    for i in group_ids:
-        if i in used:
+    for idx, group_id in enumerate(group_ids):
+        if group_id in used:
             continue
-        merged_group = grouped[i]
-        used.add(i)
-        for j in group_ids:
-            if j in used or i == j:
-                continue
-            if is_vertically_adjacent(group_bounds[i], group_bounds[j]):
-                merged_group.extend(grouped[j])
-                used.add(j)
-        merged[new_group_id] = merged_group
+
+        #if havent merged
         new_group_id += 1
+        merged_group = grouped[group_id]
+        used[group_id] = new_group_id
+        merged[new_group_id] = merged_group  
+
+        for second_group_id in group_ids[idx+1:]:
+            if second_group_id in used:
+                continue
+
+            second_group = grouped[second_group_id]
+            if is_vertically_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group)):
+                merged_group.extend(second_group)
+                used[second_group_id] = new_group_id
 
     return merged
 
-def merge_box_horizontal(grouped): #merge the groups by horizontal alignment
-    group_bounds = {gid: compute_group_bounds(group) for gid, group in grouped.items()}
+
+def merge_box_horizontal(grouped):  # merge the groups by horizontal alignment
     merged = defaultdict(list)
-    used = set()
-    new_group_id = 0
+    used = {}  # maps old group_id to new group_id
+    new_group_id = -1
 
-    group_ids = sorted(grouped.keys(), key=lambda gid: group_bounds[gid][0])  # sort by x_min
+    group_ids = sorted(grouped.keys(), key=lambda gid: compute_group_bounds(grouped[gid])[0])  # sort by x_min
 
-    for i in group_ids:
-        if i in used:
+    for idx, group_id in enumerate(group_ids):
+        if group_id in used:
             continue
-        merged_group = grouped[i]
-        used.add(i)
-        for j in group_ids:
-            if j in used or i == j:
-                continue
-            if is_horizontally_adjacent(group_bounds[i], group_bounds[j]):
-                merged_group.extend(grouped[j])
-                used.add(j)
-        merged[new_group_id] = merged_group
+
+        # if not yet merged
         new_group_id += 1
+        merged_group = grouped[group_id]
+        used[group_id] = new_group_id
+        merged[new_group_id] = merged_group
+
+        for second_group_id in group_ids[idx+1:]:
+            if second_group_id in used:
+                continue
+
+            second_group = grouped[second_group_id]
+            if is_horizontally_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group)):
+                merged_group.extend(second_group)
+                used[second_group_id] = new_group_id
 
     return merged
 

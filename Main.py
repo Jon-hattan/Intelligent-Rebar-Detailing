@@ -10,7 +10,7 @@ import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper2 as  BG
 import draw_arrows as DA
 
-pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf"
+pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
 
 # Load rectangles and void boxes
 rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
@@ -50,6 +50,8 @@ void_boxes.sort(key=sortingkey(banded=False))
 # Do rectangular substraction
 remaining_rects_horizontal = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
 remaining_rects_vertical = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
+
+
 
 
 # Group threshold for similar top y positions
@@ -101,88 +103,89 @@ print("\nAnnotating diagram....")
 last_percent = -1 #initialize variable for progress printing
 
 
+key_h = 0
+# #PROCESS HORIZONTAL AXIS FIRST
+# horizontal_color = (0.4, 0.4, 0.8)
+# for key_h, group in groups_horizontal.items():
 
-#PROCESS HORIZONTAL AXIS FIRST
-horizontal_color = (0.4, 0.4, 0.8)
-for key_h, group in groups_horizontal.items():
-
-    #percentage completion tracking
-    percent = (100*key_h//(len(groups_horizontal)+len(groups_vertical)))
-    if percent % 20 == 0 and percent != last_percent:
-        print(f"Progress: {percent}% complete")
-        last_percent = percent
-    
-    lines, arrows = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
-
-    for line in lines:
-        (x1, y), (x2, y) = line
-        sx1, sy1 = scale_coords(x1, y)
-        sx2, sy2 = scale_coords(x2, y)
-        line = page.add_line_annot((sx1, sy1), (sx2, sy2))
-        line.set_colors(stroke=horizontal_color)
-        line.set_border(width=2)
-        line.update()
-        # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key_h), fontsize = 6, color = (0, 0 ,1))
-
-    
-    for arrow in arrows:
-        (x, y1), (_, y2) = arrow
-        sx, sy1 = scale_coords(x, y1)
-        _, sy2 = scale_coords(x, y2)
-
-        DA.draw_vertical_arrow(page, sx, sy1, sy2, horizontal_color)
-
-    
-    # Label box indices
-    for idx, box in group:
-        x1, y1, x2, y2 = box
-        center_x = int((x1 + x2) / 2)
-        center_y = int((y1 + y2) / 2)
-        sx, sy = scale_coords(center_x, center_y)
-        
-        note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
-        # Writes the idx and group key
-
-        # Draw rectangle
-        sx1, sy1 = scale_coords(x1, y1)
-        sx2, sy2 = scale_coords(x2, y2)
-        rect = fitz.Rect(sx1, sy1, sx2, sy2)
-        
-        shape = page.new_shape()
-        shape.draw_rect(rect)
-        shape.finish(color=(0, 1, 0), fill=None, width=0.5)
-        shape.commit()
-
-
-#PROCESS VERTICAL AXIS 
-# vertical_color = (0.75, 0.25, 0.75)
-# for key_v, group in groups_vertical.items():
-
-#     # percentage completion tracking
-#     percent = (100 * (key_v + key_h) // (len(groups_horizontal)+len(groups_vertical)))
+#     #percentage completion tracking
+#     percent = (100*key_h//(len(groups_horizontal)+len(groups_vertical)))
 #     if percent % 20 == 0 and percent != last_percent:
 #         print(f"Progress: {percent}% complete")
 #         last_percent = percent
-
-#     # Find vertical lines and horizontal arrows
-#     lines, arrows = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
+    
+#     lines, arrows = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
 
 #     for line in lines:
-#         (x, y1), (x, y2) = line
-#         sx, sy1 = scale_coords(x, y1)
-#         _, sy2 = scale_coords(x, y2)
-#         line = page.add_line_annot((sx, sy1), (sx, sy2))
-#         line.set_colors(stroke=vertical_color)
+#         (x1, y), (x2, y) = line
+#         sx1, sy1 = scale_coords(x1, y)
+#         sx2, sy2 = scale_coords(x2, y)
+#         line = page.add_line_annot((sx1, sy1), (sx2, sy2))
+#         line.set_colors(stroke=horizontal_color)
 #         line.set_border(width=2)
 #         line.update()
-#         # note = page.insert_text((sx, 0.5*(sy1 + sy2)), str(key_v), fontsize=6, color=(0, 0, 1))
+#         # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key_h), fontsize = 6, color = (0, 0 ,1))
 
+    
 #     for arrow in arrows:
-#         (x1, y), (x2, _) = arrow
-#         sx1, sy = scale_coords(x1, y)
-#         sx2, _ = scale_coords(x2, y)
+#         (x, y1), (_, y2) = arrow
+#         sx, sy1 = scale_coords(x, y1)
+#         _, sy2 = scale_coords(x, y2)
 
-#         DA.draw_horizontal_arrow(page, sx1, sy, sx2, vertical_color)
+#         DA.draw_vertical_arrow(page, sx, sy1, sy2, horizontal_color)
+
+    
+    # # Label box indices
+    # for idx, box in group:
+    #     x1, y1, x2, y2 = box
+    #     center_x = int((x1 + x2) / 2)
+    #     center_y = int((y1 + y2) / 2)
+    #     sx, sy = scale_coords(center_x, center_y)
+        
+    #     note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
+    #     # Writes the idx and group key
+
+    #     # Draw rectangle
+    #     sx1, sy1 = scale_coords(x1, y1)
+    #     sx2, sy2 = scale_coords(x2, y2)
+    #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        
+    #     shape = page.new_shape()
+    #     shape.draw_rect(rect)
+    #     shape.finish(color=(0, 1, 0), fill=None, width=0.5)
+    #     shape.commit()
+
+
+# PROCESS VERTICAL AXIS 
+
+vertical_color = (0.75, 0.25, 0.75)
+for key_v, group in groups_vertical.items():
+
+    # percentage completion tracking
+    percent = (100 * (key_v + key_h) // (len(groups_horizontal)+len(groups_vertical)))
+    if percent % 20 == 0 and percent != last_percent:
+        print(f"Progress: {percent}% complete")
+        last_percent = percent
+
+    # Find vertical lines and horizontal arrows
+    lines, arrows = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
+
+    for line in lines:
+        (x, y1), (x, y2) = line
+        sx, sy1 = scale_coords(x, y1)
+        _, sy2 = scale_coords(x, y2)
+        line = page.add_line_annot((sx, sy1), (sx, sy2))
+        line.set_colors(stroke=vertical_color)
+        line.set_border(width=2)
+        line.update()
+        # note = page.insert_text((sx, 0.5*(sy1 + sy2)), str(key_v), fontsize=6, color=(0, 0, 1))
+
+    for arrow in arrows:
+        (x1, y), (x2, _) = arrow
+        sx1, sy = scale_coords(x1, y)
+        sx2, _ = scale_coords(x2, y)
+
+        DA.draw_horizontal_arrow(page, sx1, sy, sx2, vertical_color)
 
 
 
