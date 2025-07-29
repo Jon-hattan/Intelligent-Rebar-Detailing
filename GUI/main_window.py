@@ -5,7 +5,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QMessageBox, QTextEdit
 )
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
+from PyQt6.QtGui import QIcon
 from Processor.Main_processor import process_pdf 
+
 
 # Custom stream to redirect print output to GUI
 class EmittingStream(QObject):
@@ -37,10 +39,11 @@ class ProcessorWorker(QObject):
 class SimpleApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PDF/Image Processor")
-        self.setGeometry(100, 100, 400, 300)
+        self.setWindowTitle("Slab Reinforcement Detailing Processor")
+        self.setWindowIcon(QIcon("./GUI/icon.ico"))
+        self.setGeometry(100, 100, 700, 500)
 
-        self.label = QLabel("Upload a PDF or Image", self)
+        self.label = QLabel("Upload your PDF", self)
         self.upload_btn = QPushButton("Browse", self)
         self.process_btn = QPushButton("Process", self)
         self.output_box = QTextEdit(self)
