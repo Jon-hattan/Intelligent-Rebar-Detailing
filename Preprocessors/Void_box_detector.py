@@ -17,7 +17,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     transition_threshold = 2
     length_threshold_high = size_upper
     length_threshold_low = size_lower
-    hough_threshold = 60 if size_upper > size_limit else 20
+    hough_threshold = 30 if size_upper > size_limit else 20
 
     output = img.copy()
 
@@ -34,7 +34,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(imgGray, 130, 255, cv2.THRESH_BINARY_INV)
     if size_upper > size_limit:
-        binary = cv2.erode(binary, (15,15), iterations = 1) #erode it heavily to ensure lines are distinct
+        binary = cv2.erode(binary, (20,20), iterations = 1) #erode it heavily to ensure lines are distinct
     #cv2.imwrite("eroded.png", binary)
 
 
@@ -61,22 +61,28 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     # Loop through all lines detected, and only take in proper lines
     dotted_lines = []
+    potential_snap_lines = []
     for line in imgLines:
         x1, y1, x2, y2 = line[0]
         theta = dotted.calculate_angle(x1,y1,x2,y2)
         result = dotted.is_dotted(imgGray, line[0], transition_threshold, regularity_threshold)
-        if result == "Is Dotted Line" and abs(theta-0) > anglethresh and abs(180-theta) > anglethresh and abs(theta-90)>anglethresh:  # Check if the line is dotted
-            dotted_lines.append((x1, y1, x2, y2))
-            cv2.line(output, (x1, y1), (x2, y2), (0, 0, 255), 2)  # Draw red lines for dotted
-        elif result == "Lines too Irregular":
+        
+        if result == "Lines too Irregular":
             cv2.line(output, (x1, y1), (x2, y2), (0,255 , 0), 2)  # Draw green lines for too irregular lines
+
         elif result == "Not Enough Transitions":
             cv2.line(output, (x1, y1), (x2, y2), (255,0 , 0), 2)  # Draw blue lines for not enough transitions
+            potential_snap_lines.append((x1, y1, x2, y2))
+        elif result == "Is Dotted Line" and abs(theta-0) > anglethresh and abs(180-theta) > anglethresh and abs(theta-90)>anglethresh:  # Check if the line is dotted
+            dotted_lines.append((x1, y1, x2, y2))
+            cv2.line(output, (x1, y1), (x2, y2), (0, 0, 255), 2)  # Draw red lines for dotted
         else:
             cv2.line(output, (x1, y1), (x2, y2), (255,255 , 0), 2)
+            potential_snap_lines.append((x1, y1, x2, y2))
+        
 
     # Save the result
-    # cv2.imwrite("proper_lines.png", output)
+    #cv2.imwrite("lines_detected.png", output)
 
 
     # -------- STEP 5: Joining the Disjointed Dotted Lines --------
@@ -93,10 +99,15 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     if size_upper > size_limit:
         dotted_mask = cv2.erode(dotted_mask, (21, 21), iterations = 1)
     
+    
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))  # You can adjust size
+    dotted_mask = cv2.morphologyEx(dotted_mask, cv2.MORPH_CLOSE, kernel)
+
+
     smallest_line_length = 40 if size_upper > size_limit else 20
-    max_line_gap = 150 if size_upper > size_limit else 5
+    max_line_gap = 100 if size_upper > size_limit else 5
     resolution = 360
-    h_threshold = 150 if size_upper > size_limit else 50
+    h_threshold = 150 if size_upper > size_limit else 100
 
     lines = cv2.HoughLinesP(dotted_mask, 1, np.pi/360, threshold=h_threshold, minLineLength=smallest_line_length, maxLineGap=max_line_gap)
     lines = [] if lines is None else lines
@@ -113,7 +124,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     for line in merged_lines:
         x1, y1, x2, y2 = line
         cv2.line(mask, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
-    # cv2.imwrite("joinedlines.png", mask)
+    #cv2.imwrite("joinedlines.png", mask)
 
 
 
@@ -130,10 +141,21 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     for rect in rectangles:
         cv2.rectangle(bound, rect[0], rect[1], (0,0,255), 2)
     # cv2.imwrite("voids.png", bound)
+    
 
+    #POST-PROCESSING
 
     # Merge rectangles using morphology
     merged_rectangles = bb.merge_rectangles_with_morphology(rectangles, img, size_upper > size_limit)
+
+
+    #Snap rectangles into nearest horizontal or vertical lines
+    snap_threshold = 50 if size_upper > size_limit else 5
+    snapped_rectangles = bb.snap_rectangles_to_lines(merged_rectangles, potential_snap_lines, snap_threshold)
+
+    
+
+
     
     # Draw Merged Rectangles
     output_image = img.copy()
@@ -146,7 +168,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     # Offset merged lines back to original image coordinates
     offset_lines = []
-    for (x1_, y1_), (x2_, y2_) in merged_rectangles:
+    for (x1_, y1_), (x2_, y2_) in snapped_rectangles:
         offset_lines.append((
             x1_ + roi_offset[0], 
             y1_ + roi_offset[1],
@@ -158,7 +180,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
 
 
-def find_voids(img, roi, detect_mediums = True):
+def find_voids(img, roi = None, detect_mediums = True):
     if detect_mediums:
         void_boxes = find_void_boxes_withSize(img, roi, 20, 0) #Medium size
     else:
@@ -171,3 +193,11 @@ def find_voids(img, roi, detect_mediums = True):
     cv2.imwrite('merged_voids.png', output)
 
     return void_boxes
+
+
+
+#Example usage
+# img = cv2.imread("page1.png")
+
+# # #should only find void boxes within the part where the floor plan lies in.
+# # void_boxes = find_voids(img)

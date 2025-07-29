@@ -96,3 +96,95 @@ def merge_rectangles_with_morphology(rectangles, image, filter = True):
     return filtered_contours
 
     
+
+
+def compute_overlap(a_min, a_max, b_min, b_max):
+    return max(0, min(a_max, b_max) - max(a_min, b_min))
+
+
+
+def snap_rectangles_to_lines(rectangles, lines, threshold=50):
+    """
+    Symmetrically adjusts rectangle edges to snap to the closest nearby horizontal or vertical lines,
+    preserving the original center of the rectangle.
+
+    Parameters:
+    - rectangles: List of rectangles in ((x1, y1), (x2, y2)) format
+    - lines: List of lines in (x1, y1, x2, y2) format
+    - threshold: Max distance to consider a line "nearby"
+
+    Returns:
+    - List of adjusted rectangles
+    """
+    adjusted_rects = []
+
+    for (rx1, ry1), (rx2, ry2) in rectangles:
+        top, bottom = min(ry1, ry2), max(ry1, ry2)
+        left, right = min(rx1, rx2), max(rx1, rx2)
+
+        center_y = (top + bottom) // 2
+        center_x = (left + right) // 2
+
+        # Initialize distances
+        min_top_dist = min_bottom_dist = threshold + 1
+        min_left_dist = min_right_dist = threshold + 1
+
+        closest_top = top
+        closest_bottom = bottom
+        closest_left = left
+        closest_right = right
+
+        for x1, y1, x2, y2 in lines:
+            if abs(y1 - y2) < 5:  # Horizontal line
+                line_y = y1
+                line_xmin, line_xmax = min(x1, x2), max(x1, x2)
+                if compute_overlap(line_xmin, line_xmax, left, right) > 0:
+                    dist_top = abs(line_y - top)
+                    dist_bottom = abs(line_y - bottom)
+                    if dist_top < min_top_dist:
+                        min_top_dist = dist_top
+                        closest_top = line_y
+                    if dist_bottom < min_bottom_dist:
+                        min_bottom_dist = dist_bottom
+                        closest_bottom = line_y
+
+            elif abs(x1 - x2) < 5:  # Vertical line
+                line_x = x1
+                line_ymin, line_ymax = min(y1, y2), max(y1, y2)
+                if compute_overlap(line_ymin, line_ymax, top, bottom) > 0:
+                    dist_left = abs(line_x - left)
+                    dist_right = abs(line_x - right)
+                    if dist_left < min_left_dist:
+                        min_left_dist = dist_left
+                        closest_left = line_x
+                    if dist_right < min_right_dist:
+                        min_right_dist = dist_right
+                        closest_right = line_x
+
+        # Snap vertically to the closest of top or bottom
+        if min_top_dist <= threshold or min_bottom_dist <= threshold:
+            if min_top_dist <= min_bottom_dist:
+                new_top = closest_top
+                new_bottom = 2 * center_y - new_top
+            else:
+                new_bottom = closest_bottom
+                new_top = 2 * center_y - new_bottom
+        else:
+            new_top, new_bottom = top, bottom
+
+        # Snap horizontally to the closest of left or right
+        if min_left_dist <= threshold or min_right_dist <= threshold:
+            if min_left_dist <= min_right_dist:
+                new_left = closest_left
+                new_right = 2 * center_x - new_left
+            else:
+                new_right = closest_right
+                new_left = 2 * center_x - new_right
+        else:
+            new_left, new_right = left, right
+
+        adjusted_rects.append(((new_left, new_top), (new_right, new_bottom)))
+
+    return adjusted_rects
+
+

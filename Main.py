@@ -4,14 +4,14 @@ import numpy as np
 import math
 from collections import defaultdict
 import Preprocessors.BoundingBox_detector2 as bounding_box_detector
-import Preprocessors.Void_box_detector2 as Void_box_detector
+import Preprocessors.Void_box_detector as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
 import Box_grouper2 as  BG
 import draw_arrows as DA
 
-# pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf"
-pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
+pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf"
+# pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
 
 # Load rectangles and void boxes
 rectangles = bounding_box_detector.find_bounding_boxes(pdf_path)
@@ -29,8 +29,8 @@ roi = get_enclosing_bounding_box(rectangles)
 img = cv2.imread("page1.png")
 
 #should only find void boxes within the part where the floor plan lies in.
-# void_boxes = Void_box_detector.find_voids(img, roi)
-void_boxes = Void_box_detector.find_voids(img)
+void_boxes = Void_box_detector.find_voids(img, roi)
+
 
 #convert rectangles to corner points
 bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)

@@ -267,7 +267,7 @@ def find_bounding_boxes(pdf_path):
     # Draw contours
     grey_imgs = img.copy()
     cv2.drawContours(grey_imgs, grey_contours, -1, (0, 0, 255), 2)  # -1 means draw all contours
-    cv2.imwrite("grey_boxes.png", grey_imgs)
+    #cv2.imwrite("grey_boxes.png", grey_imgs)
 
     # -------- STEP 3: Filter the small Contours and find the enclosing box --------
     min_area = 400  # adjust this threshold as needed (e.g. 1000–3000)
@@ -278,7 +278,7 @@ def find_bounding_boxes(pdf_path):
     enclosing_box = get_enclosing_bounding_box(filtered_grey_boxes)
     cont = img.copy()
     cv2.drawContours(cont, filtered_grey_boxes, -1, (255, 0, 0), thickness=2)
-    cv2.imwrite("contours.png", cont)
+    #cv2.imwrite("contours.png", cont)
 
     # -------- STEP 4: Detect Black Boxes Within Enclosing Box --------
     print("Finding black boxes...")
@@ -309,7 +309,7 @@ def find_bounding_boxes(pdf_path):
     for x1, y1, x2, y2 in boxes:
             cv2.rectangle(contour_img, (x1, y1), (x2, y2), (0,255,0), 2)
 
-    cv2.imwrite("whiteboxes.png", contour_img)
+    #cv2.imwrite("whiteboxes.png", contour_img)
 
 
     print(f"Detected bounding boxes: found {len(boxes)}")
