@@ -1,3 +1,5 @@
+#RUN the main GUI from here
+
 import GUI.main_window as main
 import sys
 import os
