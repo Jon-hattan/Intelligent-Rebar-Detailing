@@ -100,7 +100,8 @@ def find_grey_contours(img):
 
     # -------- STEP 5: Find Contours (Grey Box Outlines) --------
     contours, _ = cv2.findContours(cleaned, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    if not contours:
+        raise ValueError("No contours found in the image. Please check that you have uploaded the correct file.")
 
     return contours
 
