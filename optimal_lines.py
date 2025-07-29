@@ -22,7 +22,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
 
     # Compute the mean y-position of each rectangle
     y_positions = [((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles]
-    min_y = min(y_positions)  # Get minimum y-position
+    avg_y = sum(y_positions)//len(y_positions)  # Get minimum y-position
 
     # Compute the center x-position of each rectangle
     centers = sorted([int((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles])
@@ -37,7 +37,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
             x2 = split_candidates[j]
 
             #check for load direction switch --> find out if load changes direction. indexing must -1 because split_candidates has extra element in front
-            if j <= 1 or j >= len(split_candidates) - 1:
+            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) != 3:
                 direction_switch = False
             else:
                 direction1 = abs(group_rectangles[j-1][2] - group_rectangles[j-1][0]) > abs(group_rectangles[j-1][3] - group_rectangles[j-1][1])
@@ -77,7 +77,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
         x2 = best_path[i + 1] + X_OVERLAP if best_path[i + 1] != x_rightbound else best_path[i + 1] 
 
         #ensure that there is a y-offset between lines.
-        y = min_y + ((-1) ** i) * Y_OFFSET
+        y = avg_y + ((-1) ** i) * Y_OFFSET
 
         lines.append(((x1, y), (x2, y)))
 

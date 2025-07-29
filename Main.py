@@ -29,7 +29,7 @@ roi = get_enclosing_bounding_box(rectangles)
 img = cv2.imread("page1.png")
 
 #should only find void boxes within the part where the floor plan lies in.
-void_boxes = Void_box_detector.find_voids(img, roi)
+void_boxes = Void_box_detector.find_voids(img, roi, detect_mediums=False)
 
 
 #convert rectangles to corner points
