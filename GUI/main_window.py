@@ -5,10 +5,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QMessageBox, QTextEdit
 )
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
-
-# Import your processing function
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Main import process_pdf  # Adjust this to your actual module
+from Processor.Main_processor import process_pdf 
 
 # Custom stream to redirect print output to GUI
 class EmittingStream(QObject):
