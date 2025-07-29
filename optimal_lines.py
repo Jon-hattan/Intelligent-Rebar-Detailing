@@ -118,9 +118,21 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
         y1 = split_candidates[i]
         for j in range(i + 1, len(split_candidates)):
             y2 = split_candidates[j]
-            if y2 - y1 <= MAX_LEN:
-                segments.append((y1, y2))
+
+            #check for load direction switch --> find out if load changes direction. indexing must -1 because split_candidates has extra element in front
+            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) != 3:
+                direction_switch = False
             else:
+                direction1 = abs(group_rectangles[j-1][2] - group_rectangles[j-1][0]) > abs(group_rectangles[j-1][3] - group_rectangles[j-1][1])
+                direction2 = abs(group_rectangles[j-2][2] - group_rectangles[j-2][0]) > abs(group_rectangles[j-2][3] - group_rectangles[j-2][1])
+                direction_switch = (direction1 != direction2)
+
+            if y2 - y1 > MAX_LEN:
+                break
+            else:
+                segments.append((y1, y2))
+
+            if direction_switch:
                 break
 
     dp = defaultdict(lambda: (-1, []))
