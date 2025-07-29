@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 # Function to draw a triangle arrowhead
 
 
-def draw_arrowhead(annot, page, tip, direction='up', size=10, color=(1, 0, 0), line_width=10, opacity=1.0):
+def draw_arrowhead(annot, page, tip, direction='up', size=10, color=(1, 0, 0), line_width=1, opacity=1.0):
     x,y = tip
     if direction == 'up':
         p1 = (x, y)
@@ -34,7 +34,7 @@ def draw_arrowhead(annot, page, tip, direction='up', size=10, color=(1, 0, 0), l
 
 
 # Function to draw a vertical arrow with triangle arrowheads at both ends
-def draw_vertical_arrow(page, x, y1, y2, line_color=(1, 0, 0), line_width=2):
+def draw_vertical_arrow(page, x, y1, y2, line_color=(1, 0, 0), line_width=1):
     annot = page.add_line_annot((x, y1), (x, y2))
     annot.set_border(width=line_width)
     annot.set_colors(stroke=line_color)
@@ -45,7 +45,7 @@ def draw_vertical_arrow(page, x, y1, y2, line_color=(1, 0, 0), line_width=2):
     draw_arrowhead(annot, page, (x, y2), direction='down', size=arrow_size, color=line_color)
 
 # Function to draw a horizontal arrow with triangle arrowheads at both ends
-def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=2):
+def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=1):
     annot = page.add_line_annot((x1, y), (x2, y))
     annot.set_border(width=line_width)
     annot.set_colors(stroke=line_color)
@@ -57,7 +57,7 @@ def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=2):
 
 
 
-# # # Example usage: draw arrows of varying size from 10 to 500
+# # Example usage: draw arrows of varying size from 10 to 500
 
 # # Create a new blank PDF
 # doc = fitz.open()

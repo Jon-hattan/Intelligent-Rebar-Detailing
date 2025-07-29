@@ -68,15 +68,17 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
     for rect in void_boxes:
         ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
                             edgecolor='red', facecolor='red', alpha=0.5))
-    for rect in filtered_boxes:
+    for i, rect in enumerate(filtered_boxes):
         x1, y1, x2, y2 = rect
         ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
                             edgecolor='blue', facecolor='blue', alpha=0.3))
+        ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
 
     ax.set_xlim(0, 15000)
     ax.set_ylim(0, 15000)
     ax.set_aspect('equal')
     plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
+    plt.gca().invert_yaxis()  
     plt.show()
 
 
@@ -140,7 +142,7 @@ def horizontal_band_decomposition(poly):
 
 
 # Merge adjacent rectangles with same x1, x2 and y continuity
-def merge_vertical_rectangles(rects, epsilon=50):
+def merge_vertical_rectangles(rects, epsilon=10):
     from collections import defaultdict
     grouped = defaultdict(list)
     for x1, y1, x2, y2 in rects:

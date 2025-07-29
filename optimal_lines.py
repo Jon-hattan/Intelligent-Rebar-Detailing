@@ -6,11 +6,11 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
     group_rectangles = [box for _, box in group] #get boxes
 
     
-    min_x_value_forGroup = int(min(min(x1, x2) for x1, y1, x2, y2 in group_rectangles))  # smallest x
-    max_x_value_forGroup = int(max(max(x1, x2) for x1, y1, x2, y2 in group_rectangles))  # largest x
+    min_x_value_forGroup = int(min(min(x1, x2) for x1, _, x2, _ in group_rectangles))  # smallest x
+    max_x_value_forGroup = int(max(max(x1, x2) for x1, _, x2, _ in group_rectangles))  # largest x
 
-    min_y_value_forGroup = int(min(min(y1, y2) for x1, y1, x2, y2 in group_rectangles))  # smallest y
-    max_y_value_forGroup = int(max(max(y1, y2) for x1, y1, x2, y2 in group_rectangles))  # largest y
+    min_y_value_forGroup = int(min(min(y1, y2) for _, y1, _, y2 in group_rectangles))  # smallest y
+    max_y_value_forGroup = int(max(max(y1, y2) for _, y1, _, y2 in group_rectangles))  # largest y
 
 
     #if it is not the first box in the row, the line optimisation starts at the min x value, instead of the edge of the building
@@ -30,14 +30,30 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
     #generate all valid segments
     split_candidates = [x_leftbound] + centers + [x_rightbound]
     segments = []
+
     for i in range(len(split_candidates) - 1):
         x1 = split_candidates[i]
         for j in range(i + 1, len(split_candidates)):
             x2 = split_candidates[j]
-            if x2 - x1 <= MAX_LEN:
-                segments.append((x1, x2))
+
+            #check for load direction switch --> find out if load changes direction. indexing must -1 because split_candidates has extra element in front
+            if j <= 1 or j >= len(split_candidates) - 1:
+                direction_switch = False
             else:
+                direction1 = abs(group_rectangles[j-1][2] - group_rectangles[j-1][0]) > abs(group_rectangles[j-1][3] - group_rectangles[j-1][1])
+                direction2 = abs(group_rectangles[j-2][2] - group_rectangles[j-2][0]) > abs(group_rectangles[j-2][3] - group_rectangles[j-2][1])
+                direction_switch = (direction1 != direction2)
+
+            if x2 - x1 > MAX_LEN:
                 break
+            else:
+                segments.append((x1, x2))
+
+            if direction_switch:
+                break
+
+            
+
 
     #dynamic programming for optimal splits. MAXIMISES THE SHORTEST LINE SEGMENT.
     dp = defaultdict(lambda: (-1, []))  # maps end_x to (min_segment_length, path)

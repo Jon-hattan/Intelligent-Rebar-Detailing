@@ -16,8 +16,18 @@ def find_bounding_boxes(pdf_path):
     page = doc[0]
     pix = page.get_pixmap(dpi=300)  # can adjust dpi
 
+    #delete text annotations
+    annot = page.first_annot
+    while annot:
+        next_annot = annot.next
+        if annot.type[1] ==  "FreeText":
+            page.delete_annot(annot)
+        annot = next_annot
+
+
     # Save as PNG
     pix.save("page1.png")
+    
 
 
     # -------- STEP 2: Read Image --------

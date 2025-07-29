@@ -89,7 +89,7 @@ def check_void_between_vertical(current_box, next_box, void_boxes):
     return False
 
 
-def is_vertically_adjacent(box1, box2, threshold=10):
+def is_vertically_adjacent(box1, box2, threshold):
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
     y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
     
@@ -101,7 +101,7 @@ def is_vertically_adjacent(box1, box2, threshold=10):
 
     return vertical_alignment and vertical_gap <= threshold
 
-def is_horizontally_adjacent(box1, box2, threshold=10):
+def is_horizontally_adjacent(box1, box2, threshold):
     # Ensure proper min/max ordering
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
     y1_min, y1_max = min(box1[1], box1[3]), max(box1[1], box1[3])
@@ -274,7 +274,7 @@ def merge_box_vertical(grouped): #merge the groups by vertical alignment
                 continue
 
             second_group = grouped[second_group_id]
-            if is_vertically_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group)):
+            if is_vertically_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group), 10):
                 merged_group.extend(second_group)
                 used[second_group_id] = new_group_id
 
@@ -303,7 +303,7 @@ def merge_box_horizontal(grouped):  # merge the groups by horizontal alignment
                 continue
 
             second_group = grouped[second_group_id]
-            if is_horizontally_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group)):
+            if is_horizontally_adjacent(compute_group_bounds(merged_group), compute_group_bounds(second_group), 10):
                 merged_group.extend(second_group)
                 used[second_group_id] = new_group_id
 

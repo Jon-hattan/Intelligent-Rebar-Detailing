@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 import numpy as np
 import math
 from collections import defaultdict
-import Preprocessors.Grey_box_detector2 as Grey_box_detector
+import Preprocessors.BoundingBox_detector2 as bounding_box_detector
 import Preprocessors.Void_box_detector2 as Void_box_detector
 import optimal_lines as OL
 import Preprocessors.Rectangle_subtraction as RS
@@ -14,7 +14,7 @@ import draw_arrows as DA
 pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
 
 # Load rectangles and void boxes
-rectangles = Grey_box_detector.find_bounding_boxes(pdf_path)
+rectangles = bounding_box_detector.find_bounding_boxes(pdf_path)
 
 
 def get_enclosing_bounding_box(lines):
@@ -22,6 +22,8 @@ def get_enclosing_bounding_box(lines):
     min_x, min_y = points.min(axis=0)
     max_x, max_y = points.max(axis=0)
     return (min_x, min_y), (max_x, max_y)
+
+
 
 roi = get_enclosing_bounding_box(rectangles)
 img = cv2.imread("page1.png")
@@ -124,7 +126,7 @@ for key_h, group in groups_horizontal.items():
         sx2, sy2 = scale_coords(x2, y)
         line = page.add_line_annot((sx1, sy1), (sx2, sy2))
         line.set_colors(stroke=horizontal_color)
-        line.set_border(width=2)
+        line.set_border(width=1.5)
         line.update()
         # note = page.insert_text((0.5*(sx1 + sx2), 0.5*(sy1+sy2)), str(key_h), fontsize = 6, color = (0, 0 ,1))
 
@@ -178,7 +180,7 @@ for key_v, group in groups_vertical.items():
         _, sy2 = scale_coords(x, y2)
         line = page.add_line_annot((sx, sy1), (sx, sy2))
         line.set_colors(stroke=vertical_color)
-        line.set_border(width=2)
+        line.set_border(width=1.5)
         line.update()
         # note = page.insert_text((sx, 0.5*(sy1 + sy2)), str(key_v), fontsize=6, color=(0, 0, 1))
 
