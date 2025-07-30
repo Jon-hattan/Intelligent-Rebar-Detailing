@@ -11,7 +11,7 @@ import Processor.Box_grouper2 as  BG
 import Processor.draw_arrows as DA
 
 
-def process_pdf(pdf_path = None):
+def process_pdf(pdf_path = None, scale_factor =  0.008):
     pdf_path = "./unprocessed_pdfs/SFL15.6 Switchroom Slab Reinforcements Clean.pdf" if pdf_path is None else pdf_path
     # pdf_path = "./unprocessed_pdfs/131101-WIP12-DR-S-5123 & 5124_commented_20250414.pdf"
 
@@ -31,7 +31,7 @@ def process_pdf(pdf_path = None):
     img = cv2.imread("./resources/page1.png")
 
     #should only find void boxes within the part where the floor plan lies in.
-    void_boxes = Void_box_detector.find_voids(img, roi, detect_mediums=False)
+    void_boxes = Void_box_detector.find_voids(img, roi, detect_mediums=True)
 
 
     #convert rectangles to corner points
@@ -88,7 +88,7 @@ def process_pdf(pdf_path = None):
         return (x / img_width) * pdf_width, (y / img_height) * pdf_height
 
     # Draw lines on PDF
-    MAX_LEN = 2500
+    MAX_LEN = 12 // scale_factor #12 meters is the limit
     Y_OFFSET = 6
     X_OVERLAP = 40
     X_OFFSET = 6
