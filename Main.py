@@ -2,9 +2,8 @@
 import os
 import sys
 from PyQt6.QtWidgets import QApplication, QSplashScreen
-from PyQt6.QtGui import QPixmap, QGuiApplication
+from PyQt6.QtGui import QPixmap, QGuiApplication, QFont, QColor
 from PyQt6.QtCore import Qt, QRect
-from GUI.main_window import SimpleApp
 from pathlib import Path
 
 
@@ -26,11 +25,23 @@ y = (screen_geometry.height() - splash_pix.height()) // 2
 splash.setGeometry(QRect(x, y, splash_pix.width(), splash_pix.height()))
 
 # Show splash screen with message
-splash.showMessage("Loading floor plan processor...", Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+
+# Set a larger font before showing the message
+font = QFont("Sans Serif", 13, QFont.Weight.Bold) 
+splash.setFont(font)
+custom_color = QColor(36, 75, 92)  # RGB values
+
+# Then show the message
+splash.showMessage("Loading app...", 
+                   Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter, 
+                   custom_color)
 splash.show()
+
 
 # Initialize and show main window
 icon = resource_path("GUI/icon.ico")
+#lazy import
+from GUI.main_window import SimpleApp
 window = SimpleApp(icon)
 window.show()
 
