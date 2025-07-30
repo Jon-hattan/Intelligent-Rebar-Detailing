@@ -107,11 +107,13 @@ class SimpleApp(QWidget):
         self.calibration_window = QWidget()
         self.calibration_window.setWindowTitle("Calibrate Scale")
         self.calibration_window.setGeometry(150, 150, 800, 600)
+        instruction_label = QLabel("📝 Drag across a line with known distance to calibrate the scale.", self.calibration_window)
 
         self.viewer = ImageViewer(image_path)
         self.viewer.scale_calibrated.connect(self.start_processing_after_calibration)
 
         layout = QVBoxLayout()
+        layout.addWidget(instruction_label)  # Add label to layout
         layout.addWidget(self.viewer)
         self.calibration_window.setLayout(layout)
         self.calibration_window.show()
