@@ -254,12 +254,12 @@ def find_bounding_boxes(pdf_path):
     pix = page.get_pixmap(dpi=300)  # can adjust dpi
 
     # Save as PNG
-    pix.save("page1.png")
+    pix.save("./resources/page1.png")
 
 
     # -------- STEP 2: Read Image and Find Grey Contours --------
-    img = cv2.imread("page1.png")
-    # cv2.imwrite("page1.png", img)
+    img = cv2.imread("./resources/page1.png")
+    # cv2.imwrite("./resources/page1.png", img)
 
     #find grey contours in the image
     print("Finding grey boxes...")
@@ -315,7 +315,7 @@ def find_bounding_boxes(pdf_path):
 
     print(f"Detected bounding boxes: found {len(boxes)}")
 
-    cv2.imwrite("boundingboxes.png", contour_img)
+    cv2.imwrite("./resources/boundingboxes.png", contour_img)
 
     return boxes
 

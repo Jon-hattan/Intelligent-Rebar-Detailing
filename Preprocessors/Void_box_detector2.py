@@ -37,5 +37,5 @@ def find_voids(image):
     return red_boxes
 
 # # Example usage:
-# boxes = find_red_boxes("page1.png")
+# boxes = find_red_boxes("./resources/page1.png")
 # print(boxes)

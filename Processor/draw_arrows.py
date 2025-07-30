@@ -58,24 +58,24 @@ def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=1):
 
 
 # # Example usage: draw arrows of varying size from 10 to 500
-
+if __name__ == "__main__":
 # # Create a new blank PDF
-# doc = fitz.open()
-# page = doc.new_page()
+    doc = fitz.open()
+    page = doc.new_page()
 
 
-# x_start = 50
-# x_gap = 20
-# for height in range(10, 510, 5):
-#     x = x_start + (height // 5) * x_gap
-#     y1 = 100
-#     y2 = y1 + height
-#     draw_vertical_arrow(page, x, y1, y2, line_color = (0.75, 0.25, 0.75))
+    x_start = 50
+    x_gap = 20
+    for height in range(10, 510, 5):
+        x = x_start + (height // 5) * x_gap
+        y1 = 100
+        y2 = y1 + height
+        draw_vertical_arrow(page, x, y1, y2, line_color = (0.75, 0.25, 0.75))
 
-# # Save the PDF
-# output_path = "varying_arrow_sizes.pdf"
-# doc.save(output_path)
-# doc.close()
+    # Save the PDF
+    output_path = "varying_arrow_sizes.pdf"
+    doc.save(output_path)
+    doc.close()
 
-# print(f"PDF with varying arrow sizes saved as {output_path}")
+    print(f"PDF with varying arrow sizes saved as {output_path}")
 

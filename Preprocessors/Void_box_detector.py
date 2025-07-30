@@ -132,7 +132,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     # -------- STEP 5: Drawing Bounding Boxes for Voids --------
 
-    bound = cv2.imread('page1.png').copy()
+    bound = cv2.imread('./resources/page1.png').copy()
 
     # Function to find intersections and generate bounding rectangles
     rectangles = bb.get_intersection_bounding_boxes(merged_lines)
@@ -163,7 +163,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         cv2.rectangle(output_image, a, b, (0, 0, 255), 2)
 
     # Save the result
-    #cv2.imwrite('merged_voids.png', output_image)
+    #cv2.imwrite('./resources/merged_voids.png', output_image)
 
 
     # Offset merged lines back to original image coordinates
@@ -190,14 +190,14 @@ def find_voids(img, roi = None, detect_mediums = True):
     output = img.copy()
     for x1, y1, x2, y2 in void_boxes:
         cv2.rectangle(output, (x1,y1), (x2,y2), (0,0,255), 2)
-    cv2.imwrite('merged_voids.png', output)
+    cv2.imwrite('./resources/merged_voids.png', output)
 
     return void_boxes
 
 
 
 #Example usage
-# img = cv2.imread("page1.png")
+# img = cv2.imread("./resources/page1.png")
 
 # # #should only find void boxes within the part where the floor plan lies in.
 # # void_boxes = find_voids(img)

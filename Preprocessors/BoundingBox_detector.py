@@ -26,13 +26,13 @@ def find_bounding_boxes(pdf_path):
 
 
     # Save as PNG
-    pix.save("page1.png")
+    pix.save("./resources/page1.png")
     
 
 
     # -------- STEP 2: Read Image --------
-    img = cv2.imread("page1.png")
-    # cv2.imwrite("page1.png", img)
+    img = cv2.imread("./resources/page1.png")
+    # cv2.imwrite("./resources/page1.png", img)
 
 
     # -------- STEP 3: Mask for Grey Boxes --------

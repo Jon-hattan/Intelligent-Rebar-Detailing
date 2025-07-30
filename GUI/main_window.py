@@ -43,7 +43,7 @@ class SimpleApp(QWidget):
         self.setWindowIcon(QIcon("./GUI/icon.ico"))
         self.setGeometry(100, 100, 700, 500)
 
-        self.label = QLabel("Upload your PDF", self)
+        self.label = QLabel("Upload your PDF:", self)
         self.upload_btn = QPushButton("Browse", self)
         self.process_btn = QPushButton("Process", self)
         self.output_box = QTextEdit(self)
