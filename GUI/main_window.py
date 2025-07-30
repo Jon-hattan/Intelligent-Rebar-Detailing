@@ -11,6 +11,8 @@ from .scale_calibration import ImageViewer
 from Processor.Main_processor import process_pdf
 
 
+
+
 # Custom stream to redirect print output to GUI
 class EmittingStream(QObject):
     text_written = pyqtSignal(str)
@@ -42,10 +44,10 @@ class ProcessorWorker(QObject):
 
 
 class SimpleApp(QWidget):
-    def __init__(self):
+    def __init__(self, icon_path):
         super().__init__()
         self.setWindowTitle("Slab Reinforcement Detailing Processor")
-        self.setWindowIcon(QIcon("./GUI/icon.ico"))
+        self.setWindowIcon(QIcon(icon_path))
         self.setGeometry(100, 100, 700, 500)
 
         self.label = QLabel("Upload your PDF:", self)

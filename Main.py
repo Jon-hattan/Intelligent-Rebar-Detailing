@@ -1,15 +1,22 @@
 #RUN the main GUI from here
-
+import os
 import sys
 from PyQt6.QtWidgets import QApplication, QSplashScreen
 from PyQt6.QtGui import QPixmap, QGuiApplication
 from PyQt6.QtCore import Qt, QRect
 from GUI.main_window import SimpleApp
+from pathlib import Path
+
+
+
+def resource_path(relative_path): #to ensure that once it is made into an exe file the paths dont get screwed up
+    base_path = getattr(sys, '_MEIPASS', Path(__file__).parent)
+    return os.path.join(base_path, relative_path)
 
 app = QApplication(sys.argv)
 
 # Load and resize splash image
-splash_pix = QPixmap("./GUI/splash.png").scaled(400, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+splash_pix = QPixmap(resource_path("GUI/splash.png")).scaled(400, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
 
 # Center the splash screen
@@ -23,7 +30,8 @@ splash.showMessage("Loading floor plan processor...", Qt.AlignmentFlag.AlignBott
 splash.show()
 
 # Initialize and show main window
-window = SimpleApp()
+icon = resource_path("GUI/icon.ico")
+window = SimpleApp(icon)
 window.show()
 
 # Close splash screen once main window is ready
