@@ -41,6 +41,9 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     # -------- STEP 3: Finding Contours --------
     # Filter out long contours before HoughLines --> ONLY TAKE IN DOTTED LINES
     contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    if contours is None:
+        return []
+    
     filtered_edges = np.zeros_like(binary)
     for cnt in contours:
         arc_len = cv2.arcLength(cnt, False)
@@ -58,7 +61,8 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     #     #filtered_edges = cv2.dilate(filtered_edges, (3,3), iterations = 3)
     #     #cv2.imwrite("filtered_edges.png", filtered_edges)
     imgLines = cv2.HoughLinesP(filtered_edges, 1, np.pi / resolution, threshold=hough_threshold, minLineLength=smallest_line_length, maxLineGap=max_line_gap)
-
+    if imgLines is None:
+        return []
     # Loop through all lines detected, and only take in proper lines
     dotted_lines = []
     potential_snap_lines = []
@@ -79,7 +83,9 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         else:
             cv2.line(output, (x1, y1), (x2, y2), (255,255 , 0), 2)
             potential_snap_lines.append((x1, y1, x2, y2))
-        
+    
+    if not dotted_lines:
+        return []
 
     # Save the result
     #cv2.imwrite("lines_detected.png", output)
@@ -111,6 +117,8 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     lines = cv2.HoughLinesP(dotted_mask, 1, np.pi/360, threshold=h_threshold, minLineLength=smallest_line_length, maxLineGap=max_line_gap)
     lines = [] if lines is None else lines
+    if not lines:
+        return []
 
     # Merge lines that are similar or collinear.
     merged_lines = merge.efficient_merge_lines(lines)
