@@ -60,3 +60,5 @@ output_path = "structural_floor_plan.pdf"
 doc.save(output_path)
 doc.close()
 
+import os #lazy importing
+os.startfile(output_path)
