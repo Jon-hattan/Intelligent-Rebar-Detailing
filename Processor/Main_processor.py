@@ -243,6 +243,10 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
 
     print(f"\nAnnotated PDF saved as {output_pdf_path}")
 
+    import os #lazy importing
+    os.startfile(output_pdf_path)
+
+
 
 if __name__ == "__main__":
     process_pdf()
