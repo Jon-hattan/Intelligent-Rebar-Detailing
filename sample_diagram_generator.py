@@ -32,8 +32,8 @@ def draw_cell(rect):
 
 # Recursive subdivision of the outer rectangle
 def subdivide(rect, depth=0):
-    min_width = 60
-    min_height = 60
+    min_width = 30
+    min_height = 30
     if rect.width < 2 * min_width or rect.height < 2 * min_height or depth > 5:
         draw_cell(rect)
         return
@@ -55,10 +55,25 @@ def subdivide(rect, depth=0):
 # Start subdivision inside the outer rectangle
 subdivide(outer_rect)
 
-# Save the PDF
-output_path = "structural_floor_plan.pdf"
-doc.save(output_path)
-doc.close()
 
 import os #lazy importing
+
+base_name = "structural_floor_plan"
+ext = ".pdf"
+counter = 0
+
+while True:
+    output_path = f"{base_name}{'' if counter == 0 else f'_{counter}'}{ext}"
+    try:
+        doc.save(output_path)
+        print(f"Saved as {output_path}")
+        break
+    except Exception as e:
+        if "cannot remove file" in str(e).lower() or "permission denied" in str(e).lower():
+            counter += 1
+        else:
+            raise e
+
+
+doc.close()
 os.startfile(output_path)
