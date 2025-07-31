@@ -93,31 +93,99 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
 
 
 
+
+def subtract_bounding_boxes_horizontal(enclosure, bounding_boxes):
+    x1, y1, x2, y2 = enclosure
+    # Collect all unique y-coordinates from white boxes and black box
+    y_coords = {y1, y2}
+    for wx1, wy1, wx2, wy2 in bounding_boxes:
+        y_coords.update([wy1, wy2])
+    y_levels = sorted(y_coords)
+
+    result_rects = []
+
+    # Process each horizontal strip
+    for i in range(len(y_levels) - 1):
+        y_start = y_levels[i]
+        y_end = y_levels[i + 1]
+        # Start with the full horizontal span
+        spans = [(x1, x2)]
+
+        # Subtract white boxes that intersect this horizontal strip
+        for wx1, wy1, wx2, wy2 in bounding_boxes:
+            if wy1 <= y_start and wy2 >= y_end:
+                new_spans = []
+                for sx1, sx2 in spans:
+                    if wx2 <= sx1 or wx1 >= sx2:
+                        new_spans.append((sx1, sx2))
+                    else:
+                        if wx1 > sx1:
+                            new_spans.append((sx1, wx1))
+                        if wx2 < sx2:
+                            new_spans.append((wx2, sx2))
+                spans = new_spans
+
+        # Create rectangles from remaining spans
+        for sx1, sx2 in spans:
+            result_rects.append((sx1, y_start, sx2, y_end))
+
+    return result_rects
+
+
+def subtract_bounding_boxes_vertical(enclosure, bounding_boxes):
+    x1, y1, x2, y2 = enclosure
+    # Collect all unique x-coordinates from bounding boxes and enclosure
+    x_coords = {x1, x2}
+    for wx1, wy1, wx2, wy2 in bounding_boxes:
+        x_coords.update([wx1, wx2])
+    x_levels = sorted(x_coords)
+
+    result_rects = []
+
+    # Process each vertical strip
+    for i in range(len(x_levels) - 1):
+        x_start = x_levels[i]
+        x_end = x_levels[i + 1]
+        # Start with the full vertical span
+        spans = [(y1, y2)]
+
+        # Subtract bounding boxes that intersect this vertical strip
+        for wx1, wy1, wx2, wy2 in bounding_boxes:
+            if wx1 <= x_start and wx2 >= x_end:
+                new_spans = []
+                for sy1, sy2 in spans:
+                    if wy2 <= sy1 or wy1 >= sy2:
+                        new_spans.append((sy1, sy2))
+                    else:
+                        if wy1 > sy1:
+                            new_spans.append((sy1, wy1))
+                        if wy2 < sy2:
+                            new_spans.append((wy2, sy2))
+                spans = new_spans
+
+        # Create rectangles from remaining spans
+        for sy1, sy2 in spans:
+            result_rects.append((x_start, sy1, x_end, sy2))
+
+    return result_rects
+
+
+
 def rectangle_subtraction_beams(enclosing_box, bounding_boxes, min_width, min_height, min_area, direction = "horizontal"):
 
     print("\nUndergoing rectangle subtraction for beams...")
 
-    # Convert to shapely boxes
-    outer_polys = [box(*enclosing_box)]
-    inner_polys = [box(*rect) for rect in bounding_boxes]
-
-    # Union of inner rectangles
-    subtract_area = unary_union(inner_polys)
-
-    # Subtract from each outer rectangle
-    remaining_polys = [poly.difference(subtract_area) for poly in outer_polys]
-
     # Apply decomposition and merging
-    resulting_rectangles = []
     if direction == "horizontal":
-        for poly in remaining_polys:
-            resulting_rectangles.extend(vertical_band_decomposition(poly))
-        merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+        decomposed = subtract_bounding_boxes_horizontal(enclosing_box, bounding_boxes)
+        merged_rectangles = merge_vertical_rectangles(decomposed)
         
     elif direction == "vertical":
-        for poly in remaining_polys:
-            resulting_rectangles.extend(horizontal_band_decomposition(poly))
-        merged_rectangles = merge_horizontal_rectangles(resulting_rectangles)
+
+         #split boxes
+        decomposed = subtract_bounding_boxes_vertical(enclosing_box, bounding_boxes)
+        merged_rectangles = merge_horizontal_rectangles(decomposed)
+
     
     
     #Filter out small rectangles

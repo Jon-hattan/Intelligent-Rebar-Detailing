@@ -88,7 +88,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         return []
 
     # Save the result
-    #cv2.imwrite("lines_detected.png", output)
+    # cv2.imwrite("./resources/lines_detected.png", output)
 
 
     # -------- STEP 5: Joining the Disjointed Dotted Lines --------
