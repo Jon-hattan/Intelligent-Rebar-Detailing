@@ -61,26 +61,26 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
 
     
 
-    # Visualization
-    fig, ax = plt.subplots()
-    for rect in bounding_boxes:
-        ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
-                            edgecolor='green', facecolor='none', linewidth=2))
-    for rect in void_boxes:
-        ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
-                            edgecolor='red', facecolor='red', alpha=0.5))
-    for i, rect in enumerate(filtered_boxes):
-        x1, y1, x2, y2 = rect
-        ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
-                            edgecolor='blue', facecolor='blue', alpha=0.3))
-        ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
+    # # Visualization
+    # fig, ax = plt.subplots()
+    # for rect in bounding_boxes:
+    #     ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
+    #                         edgecolor='green', facecolor='none', linewidth=2))
+    # for rect in void_boxes:
+    #     ax.add_patch(Rectangle((rect[0], rect[1]), rect[2]-rect[0], rect[3]-rect[1],
+    #                         edgecolor='red', facecolor='red', alpha=0.5))
+    # for i, rect in enumerate(filtered_boxes):
+    #     x1, y1, x2, y2 = rect
+    #     ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
+    #                         edgecolor='blue', facecolor='blue', alpha=0.3))
+    #     ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
 
-    ax.set_xlim(0, 15000)
-    ax.set_ylim(0, 15000)
-    ax.set_aspect('equal')
-    plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
-    plt.gca().invert_yaxis()  
-    plt.show()
+    # ax.set_xlim(0, 15000)
+    # ax.set_ylim(0, 15000)
+    # ax.set_aspect('equal')
+    # plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
+    # plt.gca().invert_yaxis()  
+    # plt.show()
 
 
     return filtered_boxes
@@ -200,21 +200,21 @@ def rectangle_subtraction_beams(enclosing_box, bounding_boxes, min_width, min_he
 
     
 
-    # Visualization
-    fig, ax = plt.subplots()
+    # # Visualization
+    # fig, ax = plt.subplots()
 
-    for i, rect in enumerate(filtered_boxes):
-        x1, y1, x2, y2 = rect
-        ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
-                            edgecolor='blue', facecolor='blue', alpha=0.3))
-        ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
+    # for i, rect in enumerate(filtered_boxes):
+    #     x1, y1, x2, y2 = rect
+    #     ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
+    #                         edgecolor='blue', facecolor='blue', alpha=0.3))
+    #     ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
 
-    ax.set_xlim(0, 15000)
-    ax.set_ylim(0, 15000)
-    ax.set_aspect('equal')
-    plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
-    plt.gca().invert_yaxis()  
-    plt.show()
+    # ax.set_xlim(0, 15000)
+    # ax.set_ylim(0, 15000)
+    # ax.set_aspect('equal')
+    # plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
+    # plt.gca().invert_yaxis()  
+    # plt.show()
 
 
     return filtered_boxes
@@ -476,7 +476,7 @@ def visualize_cv2_contours(contours):
 
 def contours_cut_horizontally(contours, epsilon=10):
 
-    visualize_cv2_contours(contours)
+    # visualize_cv2_contours(contours)
     # Convert contours to shapely polygons
     polygons = []
     for contour in contours:
