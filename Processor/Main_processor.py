@@ -78,7 +78,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
     img_height, img_width = image.shape[:2]
 
     # Open the PDF and get page dimensions
-    output_pdf_path = "annotated.pdf"
+
     doc = fitz.open(pdf_path)
     page = doc[0]
     pdf_width, pdf_height = page.rect.width, page.rect.height
@@ -235,16 +235,33 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
     #     shape.finish(color=(1, 0, 0), fill=None, width=0.5)  # Red outline for voids
     #     shape.commit()
 
-
-
-    # Save the annotated PDF
-    doc.save(output_pdf_path)
-    doc.close()
-
-    print(f"\nAnnotated PDF saved as {output_pdf_path}")
-
     import os #lazy importing
-    os.startfile(output_pdf_path)
+
+    base_name = "ANNOTATED - " + os.path.basename(doc.name)[:-4]
+
+    ext = ".pdf"
+    counter = 0
+
+    while True:
+        output_path = f"{base_name}{'' if counter == 0 else f'_{counter}'}{ext}"
+        try:
+            doc.save(output_path)
+            print(f"Saved as {output_path}")
+            break
+        except Exception as e:
+            if "cannot remove file" in str(e).lower() or "permission denied" in str(e).lower():
+                counter += 1
+            else:
+                raise e
+
+
+    doc.close()
+    print(f"\nAnnotated PDF saved as {output_path}")
+
+
+    #open file
+    os.startfile(output_path)
+
 
 
 
