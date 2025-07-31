@@ -306,6 +306,7 @@ def find_bounding_boxes(pdf_path):
     cv2.drawContours(contour_img, filtered_grey_boxes, -1, (0, 0, 0), thickness=-1)
     cv2.drawContours(contour_img, filtered_black_boxes, -1, (0, 0, 0), thickness=-1)
     cv2.drawContours(contour_img, filtered_black_boxes, -1, (0, 0, 0), thickness=20)
+
     cv2.rectangle(contour_img, enclosing_box[0], enclosing_box[1], (0,255,0), 2)
 
     print("Finding white boxes...")
@@ -316,14 +317,15 @@ def find_bounding_boxes(pdf_path):
     for x1, y1, x2, y2 in boxes:
             cv2.rectangle(contour_img, (x1, y1), (x2, y2), (0,255,0), 2)
 
-    #cv2.imwrite("whiteboxes.png", contour_img)
-
-
     print(f"Detected bounding boxes: found {len(boxes)}")
 
     cv2.imwrite("./resources/boundingboxes.png", contour_img)
 
-    return boxes, filtered_grey_boxes
+
+    
+    flattened_enclosing_box = (*enclosing_box[0], *enclosing_box[1]) #flatten to (x1, y1, x2, y2)
+
+    return boxes, flattened_enclosing_box
 
 
 

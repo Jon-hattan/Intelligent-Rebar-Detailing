@@ -93,6 +93,65 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
 
 
 
+def rectangle_subtraction_beams(enclosing_box, bounding_boxes, min_width, min_height, min_area, direction = "horizontal"):
+
+    print("\nUndergoing rectangle subtraction for beams...")
+
+    # Convert to shapely boxes
+    outer_polys = [box(*enclosing_box)]
+    inner_polys = [box(*rect) for rect in bounding_boxes]
+
+    # Union of inner rectangles
+    subtract_area = unary_union(inner_polys)
+
+    # Subtract from each outer rectangle
+    remaining_polys = [poly.difference(subtract_area) for poly in outer_polys]
+
+    # Apply decomposition and merging
+    resulting_rectangles = []
+    if direction == "horizontal":
+        for poly in remaining_polys:
+            resulting_rectangles.extend(vertical_band_decomposition(poly))
+        merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
+        
+    elif direction == "vertical":
+        for poly in remaining_polys:
+            resulting_rectangles.extend(horizontal_band_decomposition(poly))
+        merged_rectangles = merge_horizontal_rectangles(resulting_rectangles)
+    
+    
+    #Filter out small rectangles
+    filtered_boxes = [
+        rect for rect in merged_rectangles
+        if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height and (rect[2] - rect[0])*(rect[3] - rect[1]) >= min_area
+    ]
+
+    
+
+    print(f"Merged, filtered and resplit rectangles. Found {len(filtered_boxes)}")
+
+    
+
+    # Visualization
+    fig, ax = plt.subplots()
+
+    for i, rect in enumerate(filtered_boxes):
+        x1, y1, x2, y2 = rect
+        ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
+                            edgecolor='blue', facecolor='blue', alpha=0.3))
+        ax.text(x1, y1, f'F{i}', color='white', fontsize=10, verticalalignment='top')
+
+    ax.set_xlim(0, 15000)
+    ax.set_ylim(0, 15000)
+    ax.set_aspect('equal')
+    plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
+    plt.gca().invert_yaxis()  
+    plt.show()
+
+
+    return filtered_boxes
+
+
 
 # Vertical band decomposition
 def vertical_band_decomposition(poly):
@@ -144,7 +203,6 @@ def horizontal_band_decomposition(poly):
 
 # Merge adjacent rectangles with same x1, x2 and y continuity
 def merge_vertical_rectangles(rects, epsilon=10):
-    from collections import defaultdict
     grouped = defaultdict(list)
     for x1, y1, x2, y2 in rects:
         grouped[(x1, x2)].append((y1, y2))
@@ -320,7 +378,37 @@ def contours_cut_vertically(contours, epsilon=10):
     return merged_rects
 
 
+def visualize_cv2_contours(contours):
+    import numpy as np
+    # Create a blank figure
+    fig, ax = plt.subplots()
+    ax.set_aspect('equal')
+    
+    # Plot each contour
+    for i, contour in enumerate(contours):
+        # Reshape and extract x, y coordinates
+        points = contour.reshape(-1, 2)
+        color = 'red' if i % 2 == 0 else 'green'
+        polygon = plt.Polygon(points, fill=None, edgecolor=color, linewidth=1.5)
+        ax.add_patch(polygon)
+    
+    # Set limits and invert Y-axis to match image coordinates
+    all_points = np.vstack([c.reshape(-1, 2) for c in contours])
+    ax.set_xlim(all_points[:, 0].min() - 10, all_points[:, 0].max() + 10)
+    ax.set_ylim(all_points[:, 1].max() + 10, all_points[:, 1].min() - 10)
+    ax.invert_yaxis()
+    
+    plt.title("Visualization of OpenCV Contours")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.grid(True)
+    plt.show()
+
+
+
 def contours_cut_horizontally(contours, epsilon=10):
+
+    visualize_cv2_contours(contours)
     # Convert contours to shapely polygons
     polygons = []
     for contour in contours:
@@ -337,6 +425,7 @@ def contours_cut_horizontally(contours, epsilon=10):
         all_rects.extend(rects)
 
     merged_rects = merge_vertical_rectangles(all_rects, epsilon=epsilon)
+
     return merged_rects
 
 

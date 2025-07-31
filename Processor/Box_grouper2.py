@@ -98,6 +98,7 @@ def beam_between_horizontal(b1, b2, beams, threshold = 10):
     y_min = min(b1[1], b2[1])
     y_max = max(b1[3], b2[3])
 
+
     for beam in beams:
         bx1, by1, bx2, by2 = beam
 
@@ -106,11 +107,9 @@ def beam_between_horizontal(b1, b2, beams, threshold = 10):
             # Check if beam vertically overlaps with the boxes
             vertical_overlap = compute_overlap(by1, by2, y_min, y_max)
             if vertical_overlap > 0:
-                # Check if beam is taller than it is wide --> reinforcements run upwards
-                if (by2 - by1) > (bx2 - bx1):
-                    return True
-                else:
-                    return False
+                # Check if beam is wider than it is tall --> reinforcements run horizontal
+                if (by2 - by1) <= (bx2 - bx1):
+                    return False #cannot run through 
 
     return True
 
@@ -133,10 +132,8 @@ def beam_between_vertical(b1, b2, beams, threshold = 10):
             # Check if beam horizontally overlaps with the boxes
             horizontal_overlap = compute_overlap(bx1, bx2, x_min, x_max)
             if horizontal_overlap > 0:
-                # Check if beam is wider than it is tall
-                if (bx2 - bx1) > (by2 - by1):
-                    return True
-                else:
+                # Check if beam is taller than it is wide
+                if (bx2 - bx1) <= (by2 - by1):
                     return False
 
     return True
@@ -402,7 +399,7 @@ def merge_box_horizontal(grouped):  # merge the groups by horizontal alignment
 
 
 
-def group_boxes(boxes, void_boxes, beams, max_distance, min_lonebox_size=4000, direction = "horizontal"):
+def group_boxes(boxes, void_boxes, beams, max_distance, min_lonebox_size=500, direction = "horizontal"):
     if direction == "horizontal":
         hor_grouped = group_boxes_horizontal(boxes, void_boxes, beams, max_distance, min_lone_box_size=min_lonebox_size)
         vert_merged = merge_box_vertical(hor_grouped)
