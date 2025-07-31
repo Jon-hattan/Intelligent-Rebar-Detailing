@@ -57,6 +57,39 @@ def draw_horizontal_arrow(page, x1, y, x2, line_color=(1, 0, 0), line_width=1):
 
 
 
+
+def draw_circles(page, x, y, line_color=(1, 0, 0), line_length=10, line_width=1):
+    """
+    Adds a circle annotation to the given page at (x, y).
+
+    Parameters:
+    - page: PyMuPDF page object
+    - x, y: center coordinates of the circle
+    - line_color: RGB tuple for the circle border color
+    - circle_width: diameter of the circle
+    - line_width: thickness of the circle border
+    """
+
+    if not line_length//5: # circle is too small, dont draw it
+        return
+
+    circle_width = min(7, line_length//5)
+    radius = circle_width / 2
+    rect = fitz.Rect(x - radius, y - radius, x + radius, y + radius)
+
+
+
+    annot = page.add_circle_annot(rect)
+    annot.set_colors(stroke=line_color)
+    annot.set_border(width=line_width)
+    annot.update()
+
+
+
+
+
+
+
 # # Example usage: draw arrows of varying size from 10 to 500
 if __name__ == "__main__":
 # # Create a new blank PDF
@@ -71,6 +104,7 @@ if __name__ == "__main__":
         y1 = 100
         y2 = y1 + height
         draw_vertical_arrow(page, x, y1, y2, line_color = (0.75, 0.25, 0.75))
+        draw_circles(page, x, (y1+y2)//2, line_length=y2-y1)
 
     # Save the PDF
     output_path = "varying_arrow_sizes.pdf"

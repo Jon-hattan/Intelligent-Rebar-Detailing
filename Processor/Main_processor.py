@@ -120,7 +120,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
             print(f"Progress: {percent}% complete")
             last_percent = percent
         
-        lines, arrows = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
+        lines, arrows, circles = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
 
         for line in lines:
             (x1, y), (x2, y) = line
@@ -139,6 +139,14 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
             _, sy2 = scale_coords(x, y2)
 
             DA.draw_vertical_arrow(page, sx, sy1, sy2, horizontal_color)
+
+        
+        for circle in circles:
+            x, y, minimum_y, maximum_y = circle
+            sx, sy = scale_coords(x, y)
+            line_len = scale_coords(0, maximum_y)[1] - scale_coords(0, minimum_y)[1]
+            DA.draw_circles(page, sx, sy, line_color = horizontal_color, line_length = line_len, line_width = 1)
+
 
         
         # # Label box indices
@@ -174,7 +182,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
             last_percent = percent
 
         # Find vertical lines and horizontal arrows
-        lines, arrows = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
+        lines, arrows, circles = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
 
         for line in lines:
             (x, y1), (x, y2) = line
@@ -192,6 +200,12 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
             sx2, _ = scale_coords(x2, y)
 
             DA.draw_horizontal_arrow(page, sx1, sy, sx2, vertical_color)
+
+        for circle in circles:
+            x, y, minimum_x, maximum_x = circle
+            sx, sy = scale_coords(x, y)
+            line_len = scale_coords(maximum_x,0)[0] - scale_coords(minimum_x,0)[0]
+            DA.draw_circles(page, sx, sy, line_color = vertical_color, line_length = line_len, line_width = 1)
 
         # # # Label box indices
         # for idx, box in group:

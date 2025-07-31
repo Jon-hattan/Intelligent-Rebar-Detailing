@@ -70,6 +70,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
 
     lines = []
     arrows = []
+    circles = []
     for i in range(len(best_path) - 1):
         #ADD LINES
         #ensure that there is a bit of x-axis overlap between lines.
@@ -90,7 +91,11 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
         arrows.append(((mid_x, min_y_value_forGroup), (mid_x, max_y_value_forGroup)))
 
 
-    return lines, arrows
+        # Circles in the center of the arrows (x, y, line_width)
+        circles.append((mid_x, y, min_y_value_forGroup, max_y_value_forGroup))
+
+
+    return lines, arrows, circles
 
 
 
@@ -149,6 +154,7 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
 
     lines = []
     arrows = []
+    circles = []
     for i in range(len(best_path) - 1):
         y1 = best_path[i] - Y_OVERLAP if best_path[i] != y_topbound else best_path[i]
         y2 = best_path[i + 1] + Y_OVERLAP if best_path[i + 1] != y_bottombound else best_path[i + 1]
@@ -159,4 +165,6 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
         mid_y = 0.5 * (y1 + y2)
         arrows.append(((min_x_value_forGroup, mid_y), (max_x_value_forGroup, mid_y)))
 
-    return lines, arrows
+        circles.append((x, mid_y, min_x_value_forGroup, max_x_value_forGroup))
+
+    return lines, arrows, circles
