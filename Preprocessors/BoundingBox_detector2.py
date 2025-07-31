@@ -103,6 +103,10 @@ def find_grey_contours(img):
     if not contours:
         raise ValueError("No contours found in the image. Please check that you have uploaded the correct file.")
 
+    # Draw all contours
+    # img_with_contours = img.copy()
+    # cv2.drawContours(img_with_contours, contours, -1, (255,0,0),2)
+    # cv2.imwrite('./resources/contours_output.png', img_with_contours)
     return contours
 
 
