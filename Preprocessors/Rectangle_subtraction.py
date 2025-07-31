@@ -92,6 +92,36 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
     #     print(rect)
 
 
+def rectangle_subtraction2(bounding_boxes, void_boxes, min_width, min_height, min_area, direction = "horizontal"):
+
+    print("\nUndergoing rectangle subtraction...")
+
+    # Apply decomposition and merging
+    decomposed = []
+    if direction == "horizontal":
+        for enclosure in bounding_boxes:
+            decomposed.extend(subtract_bounding_boxes_horizontal(enclosure, void_boxes))
+        merged_rectangles = merge_vertical_rectangles(decomposed)
+        
+
+
+    elif direction == "vertical":
+        for enclosure in bounding_boxes:
+            decomposed.extend(subtract_bounding_boxes_vertical(enclosure, void_boxes))
+        merged_rectangles = merge_horizontal_rectangles(decomposed)
+    
+    
+    #Filter out small rectangles
+    filtered_boxes = [
+        rect for rect in merged_rectangles
+        if (rect[2] - rect[0]) >= min_width and (rect[3] - rect[1]) >= min_height and (rect[2] - rect[0])*(rect[3] - rect[1]) >= min_area
+    ]
+
+    
+
+    print(f"Merged, filtered and resplit rectangles. Found {len(filtered_boxes)}")
+
+    return filtered_boxes
 
 
 def subtract_bounding_boxes_horizontal(enclosure, bounding_boxes):
