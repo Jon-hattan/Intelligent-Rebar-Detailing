@@ -21,12 +21,12 @@ def box_bounds(box):
 def compute_overlap(a_min, a_max, b_min, b_max):
         return max(0, min(a_max, b_max) - max(a_min, b_min))
 
-def is_horizontally_aligned(box1, box2, threshold=30): #two boxes are aligned approximately horizontally
+def is_horizontally_aligned(box1, box2, threshold=20): #two boxes are aligned approximately horizontally
     _, y1_min, _, y1_max = box_bounds(box1)
     _, y2_min, _, y2_max = box_bounds(box2)
     return abs(y1_min - y2_min) <= threshold and abs(y1_max - y2_max) <= threshold
 
-def is_vertically_aligned(box1, box2, threshold=30): #two boxes are aligned approximately vertically
+def is_vertically_aligned(box1, box2, threshold=20): #two boxes are aligned approximately vertically
     x1_min, _, x1_max, _ = box_bounds(box1)
     x2_min, _, x2_max, _ = box_bounds(box2)
     return abs(x1_min - x2_min) <= threshold and abs(x1_max - x2_max) <= threshold
@@ -115,8 +115,31 @@ def is_horizontally_adjacent(box1, box2, threshold):
     return horizontal_alignment and horizontal_gap <= threshold
 
 
+def compute_distance_horizontal(box1, box2):
+    x1_min, x1_max = box1[0], box1[2]
+    x2_min, x2_max = box2[0], box2[2]
 
-def group_boxes_horizontal(boxes, void_boxes, min_lone_box_size=4000):
+    overlap = compute_overlap(x1_min, x1_max, x2_min, x2_max)
+    if overlap > 0:
+        return 0
+    else:
+        return max(x2_min - x1_max, x1_min - x2_max)
+    
+
+def compute_distance_vertical(box1, box2):
+    y1_min, y1_max = box1[1], box1[3]
+    y2_min, y2_max = box2[1], box2[3]
+
+    overlap = compute_overlap(y1_min, y1_max, y2_min, y2_max)
+    if overlap > 0:
+        return 0
+    else:
+        return max(y2_min - y1_max, y1_min - y2_max)
+
+
+
+
+def group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=4000):
     # Sort boxes by their leftmost x value
     boxes = sorted(boxes, key=lambda b: b[0])
     grouped = defaultdict(list)
@@ -160,6 +183,9 @@ def group_boxes_horizontal(boxes, void_boxes, min_lone_box_size=4000):
             if check_void_between_horizontal(current_box, next_box, void_boxes):
                 break
 
+            if compute_distance_horizontal(current_box, next_box) > max_distance:
+                break
+
             group.append((j, next_box))
             used.add(j)
             current_box = next_box
@@ -178,7 +204,7 @@ def group_boxes_horizontal(boxes, void_boxes, min_lone_box_size=4000):
     return grouped
 
 
-def group_boxes_vertical(boxes, void_boxes, min_lone_box_size=4000):
+def group_boxes_vertical(boxes, void_boxes, max_distance, min_lone_box_size=4000):
     # Sort boxes by their leftmost x value
     boxes = sorted(boxes, key=lambda b: b[1])
     grouped = defaultdict(list)
@@ -221,6 +247,9 @@ def group_boxes_vertical(boxes, void_boxes, min_lone_box_size=4000):
 
             # Placeholder for void check
             if check_void_between_vertical(current_box, next_box, void_boxes):
+                break
+            
+            if compute_distance_vertical(current_box, next_box) > max_distance:
                 break
 
             group.append((j, next_box))
@@ -311,13 +340,13 @@ def merge_box_horizontal(grouped):  # merge the groups by horizontal alignment
 
 
 
-def group_boxes(boxes, void_boxes, min_lone_box_size=4000, direction = "horizontal"):
+def group_boxes(boxes, void_boxes, max_distance, min_lonebox_size=4000, direction = "horizontal"):
     if direction == "horizontal":
-        hor_grouped = group_boxes_horizontal(boxes, void_boxes, min_lone_box_size=4000)
+        hor_grouped = group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=min_lonebox_size)
         vert_merged = merge_box_vertical(hor_grouped)
         return vert_merged
     elif direction == "vertical":
-        ver_grouped = group_boxes_vertical(boxes, void_boxes, min_lone_box_size=4000)
+        ver_grouped = group_boxes_vertical(boxes, void_boxes, max_distance, min_lone_box_size=min_lonebox_size)
         hor_merged = merge_box_horizontal(ver_grouped)
         return hor_merged
 
