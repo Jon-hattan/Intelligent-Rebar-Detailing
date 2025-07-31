@@ -281,9 +281,11 @@ def find_bounding_boxes(pdf_path):
 
     filtered_grey_boxes, _ = filter_contours(grey_contours, min_area, min_width, min_height)
     enclosing_box = get_enclosing_bounding_box(filtered_grey_boxes)
-    cont = img.copy()
-    cv2.drawContours(cont, filtered_grey_boxes, -1, (255, 0, 0), thickness=2)
-    #cv2.imwrite("contours.png", cont)
+    # cont = img.copy()
+    # cv2.drawContours(cont, filtered_grey_boxes, -1, (255, 0, 0), thickness=2)
+    # # cv2.imwrite("contours.png", cont)
+
+
 
     # -------- STEP 4: Detect Black Boxes Within Enclosing Box --------
     print("Finding black boxes...")
@@ -321,7 +323,7 @@ def find_bounding_boxes(pdf_path):
 
     cv2.imwrite("./resources/boundingboxes.png", contour_img)
 
-    return boxes
+    return boxes, filtered_grey_boxes
 
 
 

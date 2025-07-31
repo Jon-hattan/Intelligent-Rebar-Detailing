@@ -88,6 +88,61 @@ def check_void_between_vertical(current_box, next_box, void_boxes):
 
     return False
 
+def beam_between_horizontal(b1, b2, beams, threshold = 10):
+    # Ensure b1 is to the left of b2
+    if b1[0] > b2[0]:
+        b1, b2 = b2, b1
+
+    # Define the horizontal gap between the boxes
+    x_min, x_max = b1[2], b2[0]
+    y_min = min(b1[1], b2[1])
+    y_max = max(b1[3], b2[3])
+
+    for beam in beams:
+        bx1, by1, bx2, by2 = beam
+
+        # Check if beam lies within the horizontal gap
+        if bx1 >= x_min - threshold and bx2 <= x_max + threshold:
+            # Check if beam vertically overlaps with the boxes
+            vertical_overlap = compute_overlap(by1, by2, y_min, y_max)
+            if vertical_overlap > 0:
+                # Check if beam is taller than it is wide --> reinforcements run upwards
+                if (by2 - by1) > (bx2 - bx1):
+                    return True
+                else:
+                    return False
+
+    return True
+
+
+def beam_between_vertical(b1, b2, beams, threshold = 10):
+    # Ensure b1 is above b2
+    if b1[1] > b2[1]:
+        b1, b2 = b2, b1
+
+    # Define the vertical gap between the boxes
+    y_min, y_max = b1[3], b2[1]
+    x_min = min(b1[0], b2[0])
+    x_max = max(b1[2], b2[2])
+
+    for beam in beams:
+        bx1, by1, bx2, by2 = beam
+
+        # Check if beam lies within the vertical gap
+        if by1 >= y_min - threshold and by2 <= y_max + threshold:
+            # Check if beam horizontally overlaps with the boxes
+            horizontal_overlap = compute_overlap(bx1, bx2, x_min, x_max)
+            if horizontal_overlap > 0:
+                # Check if beam is wider than it is tall
+                if (bx2 - bx1) > (by2 - by1):
+                    return True
+                else:
+                    return False
+
+    return True
+
+
+
 
 def is_vertically_adjacent(box1, box2, threshold):
     x1_min, x1_max = min(box1[0], box1[2]), max(box1[0], box1[2])
@@ -139,7 +194,7 @@ def compute_distance_vertical(box1, box2):
 
 
 
-def group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=4000):
+def group_boxes_horizontal(boxes, void_boxes, beams, max_distance, min_lone_box_size=4000):
     # Sort boxes by their leftmost x value
     boxes = sorted(boxes, key=lambda b: b[0])
     grouped = defaultdict(list)
@@ -186,6 +241,9 @@ def group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=40
             if compute_distance_horizontal(current_box, next_box) > max_distance:
                 break
 
+            if not beam_between_horizontal(current_box, next_box, beams):
+                break
+
             group.append((j, next_box))
             used.add(j)
             current_box = next_box
@@ -204,7 +262,7 @@ def group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=40
     return grouped
 
 
-def group_boxes_vertical(boxes, void_boxes, max_distance, min_lone_box_size=4000):
+def group_boxes_vertical(boxes, void_boxes, beams, max_distance, min_lone_box_size=4000):
     # Sort boxes by their leftmost x value
     boxes = sorted(boxes, key=lambda b: b[1])
     grouped = defaultdict(list)
@@ -252,17 +310,21 @@ def group_boxes_vertical(boxes, void_boxes, max_distance, min_lone_box_size=4000
             if compute_distance_vertical(current_box, next_box) > max_distance:
                 break
 
+
+            if not beam_between_vertical(current_box, next_box, beams):
+                break
+
             group.append((j, next_box))
             used.add(j)
             current_box = next_box
 
-        #filter out small single member groups
-        # if len(group) == 1:
-        #     lone_box = group[0][1]
-        #     x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
-        #     area = (x1_max - x1_min) * (y1_max - y1_min)
-        #     if area < min_lone_box_size:
-        #         continue
+        # filter out small single member groups
+        if len(group) == 1:
+            lone_box = group[0][1]
+            x1_min, y1_min, x1_max, y1_max = box_bounds(lone_box)
+            area = (x1_max - x1_min) * (y1_max - y1_min)
+            if area < min_lone_box_size:
+                continue
 
         grouped[group_id] = group
         group_id+=1
@@ -340,13 +402,13 @@ def merge_box_horizontal(grouped):  # merge the groups by horizontal alignment
 
 
 
-def group_boxes(boxes, void_boxes, max_distance, min_lonebox_size=4000, direction = "horizontal"):
+def group_boxes(boxes, void_boxes, beams, max_distance, min_lonebox_size=4000, direction = "horizontal"):
     if direction == "horizontal":
-        hor_grouped = group_boxes_horizontal(boxes, void_boxes, max_distance, min_lone_box_size=min_lonebox_size)
+        hor_grouped = group_boxes_horizontal(boxes, void_boxes, beams, max_distance, min_lone_box_size=min_lonebox_size)
         vert_merged = merge_box_vertical(hor_grouped)
         return vert_merged
     elif direction == "vertical":
-        ver_grouped = group_boxes_vertical(boxes, void_boxes, max_distance, min_lone_box_size=min_lonebox_size)
+        ver_grouped = group_boxes_vertical(boxes, void_boxes, beams, max_distance, min_lone_box_size=min_lonebox_size)
         hor_merged = merge_box_horizontal(ver_grouped)
         return hor_merged
 

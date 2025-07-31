@@ -14,7 +14,7 @@ import Processor.draw_arrows as DA
 def process_pdf(pdf_path = None, scale_factor =  0.008):
 
     # Load rectangles and void boxes
-    rectangles = bounding_box_detector.find_bounding_boxes(pdf_path)
+    rectangles, beam_contours = bounding_box_detector.find_bounding_boxes(pdf_path)
 
 
     def get_enclosing_bounding_box(lines):
@@ -37,6 +37,8 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
     void_rects = void_boxes #in the form of 4 (x1, y1, x2, y2)
 
 
+    #convert beam contours into rectangles by cutting horizontally
+    beams_horizontal = RS.contours_cut_horizontally(beam_contours)
 
     # Sort rectangles by top-left position
     def sortingkey(banded = True):
@@ -55,13 +57,13 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
     remaining_rects_horizontal = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
     remaining_rects_vertical = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
 
-
+    
 
 
     # Group threshold for similar top y positions
     MAX_LEN = 12 // scale_factor #12 meters is the limit
-    groups_horizontal = BG.group_boxes(remaining_rects_horizontal, void_rects, MAX_LEN, direction = "horizontal")
-    groups_vertical = BG.group_boxes(remaining_rects_vertical, void_rects, MAX_LEN, direction = "vertical")
+    groups_horizontal = BG.group_boxes(remaining_rects_horizontal, void_rects, beams_horizontal, MAX_LEN, direction = "horizontal")
+    groups_vertical = BG.group_boxes(remaining_rects_vertical, void_rects, beams_horizontal, MAX_LEN, direction = "vertical")
 
     # Find horizontal and vertical span
     x_leftbound = min(min(x1, x2) for (x1, _, x2, _) in rectangles)
@@ -148,25 +150,25 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
 
 
         
-        # Label box indices
-        for idx, box in group:
-            x1, y1, x2, y2 = box
-            center_x = int((x1 + x2) / 2)
-            center_y = int((y1 + y2) / 2)
-            sx, sy = scale_coords(center_x, center_y)
+        # # Label box indices
+        # for idx, box in group:
+        #     x1, y1, x2, y2 = box
+        #     center_x = int((x1 + x2) / 2)
+        #     center_y = int((y1 + y2) / 2)
+        #     sx, sy = scale_coords(center_x, center_y)
             
-            note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
-            # Writes the idx and group key
+        #     note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
+        #     # Writes the idx and group key
 
-            # Draw rectangle
-            sx1, sy1 = scale_coords(x1, y1)
-            sx2, sy2 = scale_coords(x2, y2)
-            rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        #     # Draw rectangle
+        #     sx1, sy1 = scale_coords(x1, y1)
+        #     sx2, sy2 = scale_coords(x2, y2)
+        #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
             
-            shape = page.new_shape()
-            shape.draw_rect(rect)
-            shape.finish(color=(0, 1, 0), fill=None, width=0.5)
-            shape.commit()
+        #     shape = page.new_shape()
+        #     shape.draw_rect(rect)
+        #     shape.finish(color=(0, 1, 0), fill=None, width=0.5)
+        #     shape.commit()
 
 
     # PROCESS VERTICAL AXIS 
@@ -206,25 +208,25 @@ def process_pdf(pdf_path = None, scale_factor =  0.008):
             line_len = scale_coords(maximum_x,0)[0] - scale_coords(minimum_x,0)[0]
             DA.draw_circles(page, sx, sy, line_color = vertical_color, line_length = line_len, line_width = 1)
 
-        # # Label box indices
-        for idx, box in group:
-            x1, y1, x2, y2 = box
-            center_x = int((x1 + x2) / 2)
-            center_y = int((y1 + y2) / 2)
-            sx, sy = scale_coords(center_x, center_y)
+        # # # Label box indices
+        # for idx, box in group:
+        #     x1, y1, x2, y2 = box
+        #     center_x = int((x1 + x2) / 2)
+        #     center_y = int((y1 + y2) / 2)
+        #     sx, sy = scale_coords(center_x, center_y)
             
-            note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
-            # Writes the idx and group key
+        #     note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
+        #     # Writes the idx and group key
 
-            # Draw rectangle
-            sx1, sy1 = scale_coords(x1, y1)
-            sx2, sy2 = scale_coords(x2, y2)
-            rect = fitz.Rect(sx1, sy1, sx2, sy2)
+        #     # Draw rectangle
+        #     sx1, sy1 = scale_coords(x1, y1)
+        #     sx2, sy2 = scale_coords(x2, y2)
+        #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
             
-            shape = page.new_shape()
-            shape.draw_rect(rect)
-            shape.finish(color=(0, 1, 0), fill=None, width=0.5)
-            shape.commit()
+        #     shape = page.new_shape()
+        #     shape.draw_rect(rect)
+        #     shape.finish(color=(0, 1, 0), fill=None, width=0.5)
+        #     shape.commit()
 
 
 

@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from shapely.geometry import box
+from shapely.geometry import Polygon, box
 from shapely.ops import unary_union
 from collections import defaultdict
+
 
 
 def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min_area, direction = "horizontal"):
@@ -27,8 +28,8 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
         merged_rectangles = merge_vertical_rectangles(resulting_rectangles)
         
         #split boxes
-        bounding_lines = [(y, float('-inf'), float('inf')) for _, y1, _, y2 in merged_rectangles for y in (y1, y2)]
-        void_lines = generate_split_lines(void_boxes, direction="horizontal")
+        bounding_lines = generate_split_lines(merged_rectangles, void_boxes, direction = "horizontal")
+        void_lines = generate_split_lines(void_boxes, void_boxes, direction="horizontal")
         split_lines_horizontal = void_lines + bounding_lines
         split_lines_horizontal = merge_similar_lines(split_lines_horizontal)
         merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_horizontal, direction="horizontal")
@@ -39,8 +40,8 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
         merged_rectangles = merge_horizontal_rectangles(resulting_rectangles)
 
         #split boxes
-        bounding_lines = [(x, float('-inf'), float('inf')) for x1, _, x2, _ in merged_rectangles for x in (x1, x2)]
-        void_lines = generate_split_lines(void_boxes, direction="vertical")
+        bounding_lines = generate_split_lines(merged_rectangles, void_boxes, direction = "vertical")
+        void_lines = generate_split_lines(void_boxes, void_boxes, direction="vertical")
         split_lines_vertical = void_lines + bounding_lines
         split_lines_vertical = merge_similar_lines(split_lines_vertical)
         merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_vertical, direction="vertical")
@@ -208,69 +209,59 @@ def split_boxes_by_lines(boxes, lines, direction):
 
 
 # Define a function to generate split lines from void boxes
-def generate_split_lines(void_boxes, direction):
+def generate_split_lines(boxes, void_boxes, direction):
     split_lines = []
 
     if direction == "horizontal":
-        for box in void_boxes:
+        for box in boxes:
             x_min, y_min, x_max, y_max = box
 
             for y in [y_min, y_max]:  # top and bottom edges
                 # Extend left
                 x_left = x_min
-                while True:
-                    blocking = [b for b in void_boxes if b[1] < y < b[3] and b[2] <= x_left]
-                    if not blocking:
-                        x_start = float('-inf')
-                        break
+                blocking = [b for b in void_boxes if b[1] < y < b[3] and b[2] <= x_left]
+                if not blocking:
+                    x_start = float('-inf')
+                else:
                     x_block = max(b[2] for b in blocking)
-                    if x_block < x_left:
-                        x_start = x_block
-                        break
+                    x_start = min(x_block, x_left)
 
                 # Extend right
                 x_right = x_max
-                while True:
-                    blocking = [b for b in void_boxes if b[1] < y < b[3] and b[0] >= x_right]
-                    if not blocking:
-                        x_end = float('inf')
-                        break
+                blocking = [b for b in void_boxes if b[1] < y < b[3] and b[0] >= x_right]
+                if not blocking:
+                    x_end = float('inf')
+                else:
                     x_block = min(b[0] for b in blocking)
-                    if x_block > x_right:
-                        x_end = x_block
-                        break
+                    x_end = max(x_block, x_right)
+                
 
                 split_lines.append((y, x_start, x_end))
     
     if direction == "vertical":
         
-        for box in void_boxes:
+        for box in boxes:
             x_min, y_min, x_max, y_max = box
 
             for x in [x_min, x_max]:  # left and right edges
                 # Extend upward
                 y_top = y_min
-                while True:
-                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[1] < y_top]
-                    if not blocking:
-                        y_start = float('-inf')
-                        break
+                blocking = [b for b in void_boxes if b[0] < x < b[2] and b[1] < y_top]
+                if not blocking:
+                    y_start = float('-inf')
+                else:
                     y_block = max(b[3] for b in blocking)
-                    if y_block < y_top:
-                        y_start = y_block
-                        break
+                    y_start = min(y_block, y_top)
+
 
                 # Extend downward
                 y_bottom = y_max
-                while True:
-                    blocking = [b for b in void_boxes if b[0] < x < b[2] and b[3] >= y_bottom]
-                    if not blocking:
-                        y_end = float('inf')
-                        break
+                blocking = [b for b in void_boxes if b[0] < x < b[2] and b[3] >= y_bottom]
+                if not blocking:
+                    y_end = float('inf')
+                else:
                     y_block = min(b[1] for b in blocking)
-                    if y_block > y_bottom:
-                        y_end = y_block
-                        break
+                    y_end = max(y_bottom, y_block)
 
                 split_lines.append((x, y_start, y_end))
 
@@ -307,6 +298,49 @@ def merge_similar_lines(lines, threshold=20):
         merged_lines.append((avg_key, min_range, max_range))
 
     return merged_lines
+
+
+def contours_cut_vertically(contours, epsilon=10):
+    # Convert contours to shapely polygons
+    polygons = []
+    for contour in contours:
+        points = contour.reshape(-1, 2)
+        if len(points) >= 3:
+            poly = Polygon(points)
+            if poly.is_valid:
+                polygons.append(poly)
+
+    # Perform vertical band decomposition and merge
+    all_rects = []
+    for poly in polygons:
+        rects = vertical_band_decomposition(poly)
+        all_rects.extend(rects)
+
+    merged_rects = merge_vertical_rectangles(all_rects, epsilon=epsilon)
+    return merged_rects
+
+
+def contours_cut_horizontally(contours, epsilon=10):
+    # Convert contours to shapely polygons
+    polygons = []
+    for contour in contours:
+        points = contour.reshape(-1, 2)
+        if len(points) >= 3:
+            poly = Polygon(points)
+            if poly.is_valid:
+                polygons.append(poly)
+
+    # Perform vertical band decomposition and merge
+    all_rects = []
+    for poly in polygons:
+        rects = vertical_band_decomposition(poly)
+        all_rects.extend(rects)
+
+    merged_rects = merge_vertical_rectangles(all_rects, epsilon=epsilon)
+    return merged_rects
+
+
+
 
 
 #rectangle_subtraction(bounding_boxes, void_boxes)
