@@ -28,3 +28,13 @@ This application interprets scanned floor plan diagrams and generates optimized 
 - **OpenCV** for image processing
 - **PyQt6** for GUI development
 
+
+## Demo Video:
+https://github.com/user-attachments/assets/5cef2b24-e878-49fc-a382-38de04dd46bd
+
+
+
+
+
+
+
