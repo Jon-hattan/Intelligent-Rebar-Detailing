@@ -35,8 +35,8 @@ def draw_cell(rect):
 
 # Recursive subdivision of the outer rectangle
 def subdivide(rect, depth=0):
-    min_width = 30
-    min_height = 30
+    min_width = 60
+    min_height = 60
     if rect.width < 2 * min_width or rect.height < 2 * min_height or depth > 5:
         draw_cell(rect)
         return

@@ -21,8 +21,10 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
             x_rightbound = max_x_value_forGroup
 
     # Compute the mean y-position of each rectangle
-    y_positions = [((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles]
-    avg_y = sum(y_positions)//len(y_positions)  # Get minimum y-position
+    
+    y_values = [y for _, y1, _, y2 in group_rectangles for y in (y1, y2)]
+    middle_y = (min(y_values) + max(y_values)) // 2
+
 
     # Compute the center x-position of each rectangle
     centers = sorted([int((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles])
@@ -78,7 +80,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
         x2 = best_path[i + 1] + X_OVERLAP if best_path[i + 1] != x_rightbound else best_path[i + 1] 
 
         #ensure that there is a y-offset between lines.
-        y = avg_y + ((-1) ** i) * Y_OFFSET
+        y = middle_y + ((-1) ** i) * Y_OFFSET
 
         lines.append(((x1, y), (x2, y)))
 
@@ -112,8 +114,9 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
     if abs(max_y_value_forGroup - y_max) > 30:
         y_bottombound = max_y_value_forGroup
 
-    x_positions = [((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles]
-    min_x = min(x_positions)
+
+    x_values = [x for x1, _, x2, _ in group_rectangles for x in (x1, x2)]
+    middle_x = (min(x_values) + max(x_values)) // 2
 
     centers = sorted([int((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles])
     split_candidates = [y_topbound] + centers + [y_bottombound]
@@ -159,7 +162,7 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
         y1 = best_path[i] - Y_OVERLAP if best_path[i] != y_topbound else best_path[i]
         y2 = best_path[i + 1] + Y_OVERLAP if best_path[i + 1] != y_bottombound else best_path[i + 1]
 
-        x = min_x + ((-1) ** i) * X_OFFSET
+        x = middle_x + ((-1) ** i) * X_OFFSET
         lines.append(((x, y1), (x, y2)))
 
         mid_y = 0.5 * (y1 + y2)
