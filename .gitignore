@@ -4,3 +4,5 @@ __pycache__/
 *.png
 *.pdf
 *.txt
+
+!splash.png
