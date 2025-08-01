@@ -1,5 +1,7 @@
+
 import fitz  # PyMuPDF
 import random
+import os
 
 # Page and layout settings
 page_width, page_height = fitz.paper_size("a4")
@@ -19,16 +21,17 @@ outer_rect = fitz.Rect(margin, margin, page_width - margin, page_height - margin
 # Draw outer beams
 page.draw_rect(outer_rect, color=beam_color, fill=None, width=beam_thickness)
 
-# Function to draw a rectangle with beams and columns
+# List to store column positions
+column_positions = []
+
+# Function to draw a rectangle with beams and store column positions
 def draw_cell(rect):
     # Draw beams (rectangle border)
     page.draw_rect(rect, color=beam_color, fill=None, width=beam_thickness)
-    # Draw columns (black squares) at corners
+    # Store column positions (corners)
     for x in [rect.x0, rect.x1]:
         for y in [rect.y0, rect.y1]:
-            page.draw_rect(fitz.Rect(x - column_size/2, y - column_size/2,
-                                     x + column_size/2, y + column_size/2),
-                           color=column_color, fill=column_color)
+            column_positions.append((x, y))
 
 # Recursive subdivision of the outer rectangle
 def subdivide(rect, depth=0):
@@ -55,8 +58,12 @@ def subdivide(rect, depth=0):
 # Start subdivision inside the outer rectangle
 subdivide(outer_rect)
 
+# Draw all columns on top
+for x, y in column_positions:
+    page.draw_rect(fitz.Rect(x - column_size/2, y - column_size/2,
+                             x + column_size/2, y + column_size/2),
+                   color=column_color, fill=column_color)
 
-import os #lazy importing
 
 base_name = "structural_floor_plan"
 ext = ".pdf"
