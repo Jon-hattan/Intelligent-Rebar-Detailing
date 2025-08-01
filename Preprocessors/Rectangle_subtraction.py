@@ -91,7 +91,7 @@ def rectangle_subtraction(bounding_boxes, void_boxes, min_width, min_height, min
     # for rect in merged_rectangles:
     #     print(rect)
 
-
+#IMPROVED SUBTRACTION LOGIC --> FASTER
 def rectangle_subtraction2(bounding_boxes, void_boxes, min_width, min_height, min_area, direction = "horizontal"):
 
     print("\nUndergoing rectangle subtraction...")
@@ -102,6 +102,13 @@ def rectangle_subtraction2(bounding_boxes, void_boxes, min_width, min_height, mi
         for enclosure in bounding_boxes:
             decomposed.extend(subtract_bounding_boxes_horizontal(enclosure, void_boxes))
         merged_rectangles = merge_vertical_rectangles(decomposed)
+         #split boxes
+        bounding_lines = generate_split_lines(merged_rectangles, void_boxes, direction = "horizontal")
+        void_lines = generate_split_lines(void_boxes, void_boxes, direction="horizontal")
+        split_lines_horizontal = void_lines + bounding_lines
+        split_lines_horizontal = merge_similar_lines(split_lines_horizontal)
+        merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_horizontal, direction="horizontal")
+
         
 
 
@@ -110,6 +117,14 @@ def rectangle_subtraction2(bounding_boxes, void_boxes, min_width, min_height, mi
             decomposed.extend(subtract_bounding_boxes_vertical(enclosure, void_boxes))
         merged_rectangles = merge_horizontal_rectangles(decomposed)
     
+         #split boxes
+        bounding_lines = generate_split_lines(merged_rectangles, void_boxes, direction = "vertical")
+        void_lines = generate_split_lines(void_boxes, void_boxes, direction="vertical")
+        split_lines_vertical = void_lines + bounding_lines
+        split_lines_vertical = merge_similar_lines(split_lines_vertical)
+        merged_rectangles = split_boxes_by_lines(merged_rectangles, split_lines_vertical, direction="vertical")
+
+
     
     #Filter out small rectangles
     filtered_boxes = [
@@ -118,86 +133,110 @@ def rectangle_subtraction2(bounding_boxes, void_boxes, min_width, min_height, mi
     ]
 
     
+    # # # Visualization
+    # fig, ax = plt.subplots()
 
-    print(f"Merged, filtered and resplit rectangles. Found {len(filtered_boxes)}")
+    # for i, rect in enumerate(filtered_boxes):
+    #     x1, y1, x2, y2 = rect
+    #     ax.add_patch(Rectangle((x1, y1), x2-x1, y2-y1,
+    #                         edgecolor='blue', facecolor='blue', alpha=0.3))
+    #     ax.text(x1, y1, f'F{i}', color='white', fontsize=8, verticalalignment='top')
+
+    # ax.set_xlim(0, 15000)
+    # ax.set_ylim(0, 15000)
+    # ax.set_aspect('equal')
+    # plt.title("Decomposition of Outer Rectangles after Subtracting Overlapping Inner Rectangle")
+    # plt.gca().invert_yaxis()  
+    # plt.show()
+
+    # print(f"Merged, filtered and resplit rectangles. Found {len(filtered_boxes)}")
 
     return filtered_boxes
 
 
+
 def subtract_bounding_boxes_horizontal(enclosure, bounding_boxes):
     x1, y1, x2, y2 = enclosure
-    # Collect all unique y-coordinates from white boxes and black box
     y_coords = {y1, y2}
     for wx1, wy1, wx2, wy2 in bounding_boxes:
-        y_coords.update([wy1, wy2])
+        if wx2 > x1 and wx1 < x2 and wy2 > y1 and wy1 < y2:
+            y_coords.update([max(wy1, y1), min(wy2, y2)])
     y_levels = sorted(y_coords)
 
     result_rects = []
 
-    # Process each horizontal strip
     for i in range(len(y_levels) - 1):
         y_start = y_levels[i]
         y_end = y_levels[i + 1]
-        # Start with the full horizontal span
         spans = [(x1, x2)]
 
-        # Subtract white boxes that intersect this horizontal strip
         for wx1, wy1, wx2, wy2 in bounding_boxes:
-            if wy1 <= y_start and wy2 >= y_end:
-                new_spans = []
-                for sx1, sx2 in spans:
-                    if wx2 <= sx1 or wx1 >= sx2:
-                        new_spans.append((sx1, sx2))
-                    else:
-                        if wx1 > sx1:
-                            new_spans.append((sx1, wx1))
-                        if wx2 < sx2:
-                            new_spans.append((wx2, sx2))
-                spans = new_spans
+            if wy2 <= y_start or wy1 >= y_end:
+                continue
+            if wx2 <= x1 or wx1 >= x2:
+                continue
 
-        # Create rectangles from remaining spans
+            new_spans = []
+            for sx1, sx2 in spans:
+                if wx2 <= sx1 or wx1 >= sx2:
+                    new_spans.append((sx1, sx2))
+                else:
+                    if wx1 > sx1:
+                        new_spans.append((sx1, wx1))
+                    if wx2 < sx2:
+                        new_spans.append((wx2, sx2))
+            spans = new_spans
+
         for sx1, sx2 in spans:
-            result_rects.append((sx1, y_start, sx2, y_end))
+            if sx1 < sx2 and y_start < y_end:
+                result_rects.append((sx1, y_start, sx2, y_end))
 
     return result_rects
 
 
+
+
+# Fix: Improved vertical slicing logic to handle partial overlaps
+
 def subtract_bounding_boxes_vertical(enclosure, bounding_boxes):
     x1, y1, x2, y2 = enclosure
-    # Collect all unique x-coordinates from bounding boxes and enclosure
     x_coords = {x1, x2}
     for wx1, wy1, wx2, wy2 in bounding_boxes:
-        x_coords.update([wx1, wx2])
+        if wx2 > x1 and wx1 < x2 and wy2 > y1 and wy1 < y2:
+            x_coords.update([max(wx1, x1), min(wx2, x2)])
     x_levels = sorted(x_coords)
 
     result_rects = []
 
-    # Process each vertical strip
     for i in range(len(x_levels) - 1):
         x_start = x_levels[i]
         x_end = x_levels[i + 1]
-        # Start with the full vertical span
         spans = [(y1, y2)]
 
-        # Subtract bounding boxes that intersect this vertical strip
         for wx1, wy1, wx2, wy2 in bounding_boxes:
-            if wx1 <= x_start and wx2 >= x_end:
-                new_spans = []
-                for sy1, sy2 in spans:
-                    if wy2 <= sy1 or wy1 >= sy2:
-                        new_spans.append((sy1, sy2))
-                    else:
-                        if wy1 > sy1:
-                            new_spans.append((sy1, wy1))
-                        if wy2 < sy2:
-                            new_spans.append((wy2, sy2))
-                spans = new_spans
+            if wx2 <= x_start or wx1 >= x_end:
+                continue
+            if wy2 <= y1 or wy1 >= y2:
+                continue
 
-        # Create rectangles from remaining spans
+            new_spans = []
+            for sy1, sy2 in spans:
+                if wy2 <= sy1 or wy1 >= sy2:
+                    new_spans.append((sy1, sy2))
+                else:
+                    if wy1 > sy1:
+                        new_spans.append((sy1, wy1))
+                    if wy2 < sy2:
+                        new_spans.append((wy2, sy2))
+            spans = new_spans
+
         for sy1, sy2 in spans:
-            result_rects.append((x_start, sy1, x_end, sy2))
+            if sy1 < sy2 and x_start < x_end:
+                result_rects.append((x_start, sy1, x_end, sy2))
 
     return result_rects
+
+
 
 
 

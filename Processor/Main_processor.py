@@ -37,6 +37,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     void_rects = void_boxes #in the form of 4 (x1, y1, x2, y2)
 
 
+
     #convert beam contours into rectangles by cutting horizontally
     beams_horizontal = RS.rectangle_subtraction_beams(enclosure, bounding_rects, 20, 20, 500, direction = "horizontal")
     beams_vertical = RS.rectangle_subtraction_beams(enclosure, bounding_rects, 20, 20, 500, direction = "vertical")
@@ -57,8 +58,9 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     void_boxes.sort(key=sortingkey(banded=False))
 
     # Do rectangular substraction
-    remaining_rects_horizontal = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
-    remaining_rects_vertical = RS.rectangle_subtraction(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
+
+    remaining_rects_horizontal = RS.rectangle_subtraction2(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
+    remaining_rects_vertical = RS.rectangle_subtraction2(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
 
     
 

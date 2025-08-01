@@ -88,7 +88,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         return []
 
     # Save the result
-    # cv2.imwrite("./resources/lines_detected.png", output)
+    cv2.imwrite("./resources/lines_detected.png", output)
 
 
     # -------- STEP 5: Joining the Disjointed Dotted Lines --------
@@ -111,7 +111,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
 
     smallest_line_length = 40 if size_upper > size_limit else 20
-    max_line_gap = 100 if size_upper > size_limit else 5
+    max_line_gap = 180 if size_upper > size_limit else 5
     resolution = 360
     h_threshold = 150 if size_upper > size_limit else 100
 
@@ -131,7 +131,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     for line in merged_lines:
         x1, y1, x2, y2 = line
         cv2.line(mask, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
-    #cv2.imwrite("joinedlines.png", mask)
+    # cv2.imwrite("joinedlines.png", mask)
 
 
 
