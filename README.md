@@ -38,6 +38,7 @@ This application interprets scanned floor plan diagrams and generates optimized 
 - **Python**
 - **OpenCV** for image processing
 - **PyQt6** for GUI development
+- **PyMuPDF** for PDF annotation
 
 
 ## Demo Video:
