@@ -2,6 +2,19 @@
 
 A Python application that automates the analysis of structural floor plans and optimizes rebar detailing using computer vision, engineering rules, and an interactive GUI.
 
+## Table of Contents
+- [🚀 Overview](#---overview)
+- [✨ Key Features](#--key-features)
+- [🛠️ Tools Used](#----used-)
+- [Demo Video:](#demo-video-)
+- [📐 Rebar Detailing Rules & Logic](#---rebar-detailing-rules---logic)
+- [Algorithm Overview](#algorithm-overview)
+  * [🔍 Stage 1: Preprocessing](#---stage-1--preprocessing)
+  * [🧠 Stage 2: Processing & Rebar Grouping](#---stage-2--processing---rebar-grouping)
+
+
+
+
 ## 🚀 Overview
 
 During my internship at **Jacobs International Consultants**, I observed that manually detailing slab reinforcement diagrams was a time-consuming and repetitive task, often taking civil engineering full-timers/interns several hours just to complete a single set. Ainnoway I'm doin that manually. I developed this tool to automate the process using **OpenCV** and **Python** and used **PyQt6** to create the GUI.
@@ -32,6 +45,7 @@ This application interprets scanned floor plan diagrams and generates optimized 
 ## Demo Video:
 https://github.com/user-attachments/assets/5cef2b24-e878-49fc-a382-38de04dd46bd  
 
+<br>
 <br>
 
 
@@ -74,22 +88,23 @@ This automation tool follows a set of engineering rules to ensure that the gener
 
 These rules are embedded into the logic of the automation tool and guide the placement, splitting, and annotation of reinforcement bars across slab regions. The goal is to produce constructible, efficient, and code-compliant rebar layouts with minimal manual intervention.
 
+<br>
+<br>
 
 
-
-## 🧪 Algorithm Overview
+## Algorithm Overview
 
 ### 🔍 Stage 1: Preprocessing
 
-The preprocessing stage prepares the scanned structural diagram for rebar detailing by identifying slab regions, beams, and voids using computer vision techniques. This stage involves two key scripts: `boundingbox_detector2.py` and `void_box_detector.py`.
+The preprocessing stage prepares the scanned structural diagram for rebar detailing by identifying slab regions, beams, and voids using computer vision techniques. This stage involves three key scripts: `boundingbox_detector2.py`, `void_box_detector.py` and `rectangle_subtraction.py`.
 
-#### 1.1 Bounding Box Detection (`boundingbox_detector2.py`)
+#### 1.1 Bounding Box Detection (`BoundingBox_detector2.py`)
 - The diagram is analyzed using **OpenCV** to detect structural elements.
 - **Beams** are identified as **grey or black rectangular regions**.
 - **Slabs** are registered as **white rectangles enclosed within beams**.
-- These slab regions are extracted and passed on for further processing.
+- These slab and beam regions are extracted and passed on for further processing.
 
-#### 1.2 Void Detection (`void_box_detector.py`)
+#### 1.2 Void Detection (`Void_box_detector.py`)
 - This script detects **openings** (e.g., stairwells, ducts) where rebars should not be placed.
 - It searches for **dotted or dashed line boxes** with a **dashed/dotted cross** inside them.
 - The detection process includes:
@@ -103,9 +118,51 @@ The preprocessing stage prepares the scanned structural diagram for rebar detail
     - Draws rectangles around detected voids.
     - Applies **morphological merging** to combine overlapping boxes caused by noise.
     - Adds logic to **snap rectangles** to the nearest horizontal/vertical dotted lines for improved accuracy.
+   
 
-This preprocessing stage ensures that only valid slab regions are considered for rebar detailing, and that voids are excluded from reinforcement zones.
+#### 1.3 Rectangle Subtraction & Slab Segmentation (`rectangle_subtraction.py`)
+- **Subtracts void boxes** from slab regions to ensure rebars are not placed in openings.
+- **Splits slabs into smaller rectangles**, either **horizontally or vertically**, to create zones of rebar continuity.
+- This segmentation makes it easier for later processing to be done to optimize the arrangement of rebars.
 
+
+This preprocessing stage ensures that only valid slab regions are considered for rebar detailing, and that voids boxes are excluded from reinforcement zones.
+<br>
+
+
+### 🧠 Stage 2: Processing & Rebar Grouping
+
+After preprocessing, the slab regions are grouped and optimized for rebar continuity using spatial logic and dynamic programming.
+
+#### 2.1 Slab Region Grouping (`Box_grouper2.py`)
+- This script groups the **split slab rectangles** into logical zones for rebar continuity.
+- Grouping behavior depends on the **rebar direction**:
+  - **Horizontal rebars**: Group boxes **horizontally first**, then merge **vertically aligned groups**.
+  - **Vertical rebars**: Group boxes **vertically first**, then merge **horizontally aligned groups**.
+- Grouping constraints:
+  - **Void boxes** between slabs prevent grouping, ensuring rebars do not pass through openings.
+  - **Beams with parallel reinforcement** prevent grouping to avoid rebars running parallel to beam reinforcement.
+
+This grouping logic ensures that rebar continuity respects structural boundaries and avoids conflicts with voids and beam reinforcement.
+
+#### 2.2 Optimal Rebar Line Placement (`optimal_lines.py`)
+- For each group, the algorithm computes the **optimal rebar layout** using a dynamic programming strategy that **maximizes the shortest segment length** (mini-max optimization).
+  1. **Bounding Limits**: Determine slab boundaries and adjust start/end points based on proximity to building edges.
+  2. **Segment Generation**:
+     - Identify center points of rectangles.
+     - Generate all valid rebar segments between these points.
+     - Respect the maximum rebar length (`MAX_LEN`, typically 12m).
+     - Detect and halt at **load direction switches** to preserve structural logic.
+  3. **Dynamic Programming**:
+     - Track the best path of segments using a cache.
+     - Update paths only if the new minimum segment length improves the previous.
+  4. **Output Generation**:
+     - Draw rebar lines with slight overlaps (`X_OVERLAP` or `Y_OVERLAP`) for continuity.
+     - Add perpendicular **arrows** to indicate load direction.
+     - Place **circles** at midpoints for annotation and clarity.
+
+
+This stage finalizes the rebar layout logic before annotation and export. From there, `Main_processor.py` will annotate the diagram and export.
 
 
 
