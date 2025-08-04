@@ -2,7 +2,18 @@ import numpy as np
 from collections import defaultdict
 
 
-def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN):
+def point_in_rectangle(point, rect):
+    px, py = point
+    x1, y1, x2, y2 = rect
+
+    # Normalize rectangle coordinates in case they are unordered
+    x_min, x_max = min(x1, x2), max(x1, x2)
+    y_min, y_max = min(y1, y2), max(y1, y2)
+
+    return x_min <= px <= x_max and y_min <= py <= y_max
+
+
+def find_optimal_lines_horizontal(two_way_slabs, group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN):
     group_rectangles = [box for _, box in group] #get boxes
 
     
@@ -52,8 +63,14 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
                 segments.append((x1, x2))
 
             if direction_switch:
-                break
-
+                #check if the slab segment is in a two-way slab. if not, break
+                is_two_way = False 
+                for rect in two_way_slabs:
+                    if point_in_rectangle((x2, middle_y), rect):
+                        is_two_way = True
+                        break
+                if not is_two_way:
+                    break
             
 
 
@@ -101,7 +118,7 @@ def find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_le
 
 
 
-def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN):
+def find_optimal_lines_vertical(two_way_slabs, group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN):
     group_rectangles = [box for _, box in group]
 
     min_y_value_forGroup = int(min(min(y1, y2) for x1, y1, x2, y2 in group_rectangles))
@@ -141,7 +158,14 @@ def find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottom
                 segments.append((y1, y2))
 
             if direction_switch:
-                break
+                #check if the slab segment is in a two-way slab. if not, break
+                is_two_way = False 
+                for rect in two_way_slabs:
+                    if point_in_rectangle((middle_x, y2), rect):
+                        is_two_way = True
+                        break
+                if not is_two_way:
+                    break
 
     dp = defaultdict(lambda: (-1, []))
     dp[y_topbound] = (float('inf'), [y_topbound])

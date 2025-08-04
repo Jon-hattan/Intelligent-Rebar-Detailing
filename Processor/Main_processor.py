@@ -54,35 +54,17 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
         return True  # Rectangles overlap
     
     #Find which slabs are two way
-    two_way_slabs_idx = set()
-    for i, rect in enumerate(slabs_rects):
+    two_way_slabs = []
+    for rect in slabs_rects:
         for direction_mark in two_way:
             if rectangles_overlap(rect, direction_mark):
-                two_way_slabs_idx.add(i)
-
-
-
-
+                two_way_slabs.append(two_way_slabs)
 
 
     #convert beam contours into rectangles by cutting horizontally
     beams_horizontal = RS.rectangle_subtraction_beams(enclosure, slabs_rects, 20, 20, 500, direction = "horizontal")
     beams_vertical = RS.rectangle_subtraction_beams(enclosure, slabs_rects, 20, 20, 500, direction = "vertical")
 
-    
-
-    # Sort rectangles by top-left position
-    def sortingkey(banded = True):
-        def top_left_sort_key(box):
-            x1, y1, x2, y2 = box
-            top_y = min(y1, y2)
-            left_x = min(x1, x2)
-            row_band = round(top_y / 100) if banded else top_y
-            return (row_band, left_x)
-        return top_left_sort_key
-
-    # rectangles.sort(key=sortingkey())
-    void_boxes.sort(key=sortingkey(banded=False))
 
     # Do rectangular substraction
 
@@ -153,7 +135,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
             print(f"Progress: {percent}% complete")
             last_percent = percent
         
-        lines, arrows, circles = OL.find_optimal_lines_horizontal(group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
+        lines, arrows, circles = OL.find_optimal_lines_horizontal(two_way_slabs, group, Y_OFFSET, X_OVERLAP, x_rightbound, x_leftbound, x_min, x_max, MAX_LEN)
 
         for line in lines:
             (x1, y), (x2, y) = line
@@ -215,7 +197,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
             last_percent = percent
 
         # Find vertical lines and horizontal arrows
-        lines, arrows, circles = OL.find_optimal_lines_vertical(group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
+        lines, arrows, circles = OL.find_optimal_lines_vertical(two_way_slabs, group, X_OFFSET, Y_OVERLAP, y_topbound, y_bottombound, y_min, y_max, MAX_LEN)
 
         for line in lines:
             (x, y1), (x, y2) = line
