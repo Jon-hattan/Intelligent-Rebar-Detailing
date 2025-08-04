@@ -6,7 +6,7 @@ A Python application that automates the analysis of structural floor plans and o
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Tools Used](#tools-used)
-- [Demo Video:](#demo-video)
+- [Demo Video](#demo-video)
 - [Rebar Detailing Rules & Logic](#rebar-detailing-rules-and-logic)
 - [Algorithm Overview](#algorithm-overview)
 
