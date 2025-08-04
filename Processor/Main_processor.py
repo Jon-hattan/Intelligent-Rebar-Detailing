@@ -5,6 +5,7 @@ import math
 from collections import defaultdict
 import Preprocessors.BoundingBox_detector2 as bounding_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
+import Preprocessors.Load_direction_detector as Load_direction_detector
 import Preprocessors.Rectangle_subtraction as RS
 import Processor.optimal_lines as OL
 import Processor.Box_grouper2 as  BG
@@ -15,7 +16,6 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
 
     # Load rectangles and void boxes
     rectangles, enclosure = bounding_box_detector.find_bounding_boxes(pdf_path)
-
 
     def get_enclosing_bounding_box(lines):
         points = np.array([[x, y] for line in lines for x, y in [(line[0], line[1]), (line[2], line[3])]])
@@ -31,16 +31,43 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     #should only find void boxes within the part where the floor plan lies in.
     void_boxes = Void_box_detector.find_voids(img, roi, detect_mediums=True)
 
+    #find direction guides
+    half_ref = cv2.imread("./Preprocessors/image_references/reference_half.png")
+    full_ref = cv2.imread("./Preprocessors/image_references/reference_full.png")
+    one_way, two_way = Load_direction_detector.detect_direction_guides(full_ref, half_ref, img)
 
     #convert rectangles to corner points
-    bounding_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
+    slabs_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
     void_rects = void_boxes #in the form of 4 (x1, y1, x2, y2)
+
+    
+    def rectangles_overlap(rect1, rect2): #function to detect if rectangles overlap
+        x1_min, y1_min, x1_max, y1_max = rect1
+        x2_min, y2_min, x2_max, y2_max = rect2
+
+        # Check for no overlap conditions
+        if x1_max < x2_min or x2_max < x1_min:
+            return False  # One rectangle is to the left of the other
+        if y1_max < y2_min or y2_max < y1_min:
+            return False  # One rectangle is above the other
+
+        return True  # Rectangles overlap
+    
+    #Find which slabs are two way
+    two_way_slabs_idx = set()
+    for i, rect in enumerate(slabs_rects):
+        for direction_mark in two_way:
+            if rectangles_overlap(rect, direction_mark):
+                two_way_slabs_idx.add(i)
+
+
+
 
 
 
     #convert beam contours into rectangles by cutting horizontally
-    beams_horizontal = RS.rectangle_subtraction_beams(enclosure, bounding_rects, 20, 20, 500, direction = "horizontal")
-    beams_vertical = RS.rectangle_subtraction_beams(enclosure, bounding_rects, 20, 20, 500, direction = "vertical")
+    beams_horizontal = RS.rectangle_subtraction_beams(enclosure, slabs_rects, 20, 20, 500, direction = "horizontal")
+    beams_vertical = RS.rectangle_subtraction_beams(enclosure, slabs_rects, 20, 20, 500, direction = "vertical")
 
     
 
@@ -59,8 +86,8 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
 
     # Do rectangular substraction
 
-    remaining_rects_horizontal = RS.rectangle_subtraction2(bounding_rects, void_rects, 20, 20, 500, direction = "horizontal")
-    remaining_rects_vertical = RS.rectangle_subtraction2(bounding_rects, void_rects, 20, 20, 500, direction = "vertical")
+    remaining_rects_horizontal = RS.rectangle_subtraction2(slabs_rects, void_rects, 20, 20, 500, direction = "horizontal")
+    remaining_rects_vertical = RS.rectangle_subtraction2(slabs_rects, void_rects, 20, 20, 500, direction = "vertical")
 
     
 
@@ -108,8 +135,8 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
         y_values = [y for rect in rects for y in (rect[1], rect[3])]
         return min(y_values), max(y_values)
 
-    x_min, x_max = get_rect_x_range(bounding_rects) #the minimum x and max x for the rectangles
-    y_min, y_max = get_rect_y_range(bounding_rects)  # the minimum y and max y for the rectangles
+    x_min, x_max = get_rect_x_range(slabs_rects) #the minimum x and max x for the rectangles
+    y_min, y_max = get_rect_y_range(slabs_rects)  # the minimum y and max y for the rectangles
 
     print("\nAnnotating diagram....")
     last_percent = -1 #initialize variable for progress printing
