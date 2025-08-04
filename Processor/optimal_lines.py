@@ -50,7 +50,7 @@ def find_optimal_lines_horizontal(two_way_slabs, group, Y_OFFSET, X_OVERLAP, x_r
             x2 = split_candidates[j]
 
             #check for load direction switch --> find out if load changes direction. indexing must -1 because split_candidates has extra element in front
-            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) != 3:
+            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) == 3:
                 direction_switch = False
             else:
                 direction1 = abs(group_rectangles[j-1][2] - group_rectangles[j-1][0]) > abs(group_rectangles[j-1][3] - group_rectangles[j-1][1])
@@ -145,7 +145,7 @@ def find_optimal_lines_vertical(two_way_slabs, group, X_OFFSET, Y_OVERLAP, y_top
             y2 = split_candidates[j]
 
             #check for load direction switch --> find out if load changes direction. indexing must -1 because split_candidates has extra element in front
-            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) != 3:
+            if j <= 1 or j >= len(split_candidates) - 1 or len(split_candidates) == 3:
                 direction_switch = False
             else:
                 direction1 = abs(group_rectangles[j-1][2] - group_rectangles[j-1][0]) > abs(group_rectangles[j-1][3] - group_rectangles[j-1][1])

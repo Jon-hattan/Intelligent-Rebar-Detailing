@@ -34,31 +34,40 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     #find direction guides
     half_ref = cv2.imread("./Preprocessors/image_references/reference_half.png")
     full_ref = cv2.imread("./Preprocessors/image_references/reference_full.png")
-    one_way, two_way = Load_direction_detector.detect_direction_guides(full_ref, half_ref, img)
+    two_way, one_way = Load_direction_detector.detect_direction_guides(full_ref, half_ref, img)
 
     #convert rectangles to corner points
     slabs_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
     void_rects = void_boxes #in the form of 4 (x1, y1, x2, y2)
 
     
-    def rectangles_overlap(rect1, rect2): #function to detect if rectangles overlap
-        x1_min, y1_min, x1_max, y1_max = rect1
-        x2_min, y2_min, x2_max, y2_max = rect2
+        
+    def inside_rectangle(rect, direction_mark):
+        #Checks if the center point of direction_mark lies inside rect.
 
-        # Check for no overlap conditions
-        if x1_max < x2_min or x2_max < x1_min:
-            return False  # One rectangle is to the left of the other
-        if y1_max < y2_min or y2_max < y1_min:
-            return False  # One rectangle is above the other
+        # Unpack direction mark coordinates
+        dx1, dy1, dx2, dy2 = direction_mark
 
-        return True  # Rectangles overlap
+        # Compute center point of direction mark
+        center_x = (dx1 + dx2) / 2
+        center_y = (dy1 + dy2) / 2
+
+        # Unpack and normalize rect coordinates
+        rx1, ry1, rx2, ry2 = rect
+        x_min, x_max = min(rx1, rx2), max(rx1, rx2)
+        y_min, y_max = min(ry1, ry2), max(ry1, ry2)
+
+        # Check if center point lies within rect
+        return x_min <= center_x <= x_max and y_min <= center_y <= y_max
+
     
     #Find which slabs are two way
     two_way_slabs = []
     for rect in slabs_rects:
         for direction_mark in two_way:
-            if rectangles_overlap(rect, direction_mark):
-                two_way_slabs.append(two_way_slabs)
+            if inside_rectangle(rect, direction_mark):
+                two_way_slabs.append(rect)
+
 
 
     #convert beam contours into rectangles by cutting horizontally
