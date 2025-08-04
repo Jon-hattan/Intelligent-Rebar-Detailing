@@ -56,13 +56,16 @@ This automation tool follows a set of engineering rules to ensure that the gener
   - The **reinforcement direction in the slab is perpendicular** to the beam.
 - This ensures proper anchorage and avoids congestion within the beam.
 
-### 4.  Load Direction-Based Splitting
+### 4. Void Boxes
+- Rebars **cannot pass through void boxes**, which are denoted by dotted or dashed line boxes with a cross in the center.
+
+### 5.  Load Direction-Based Splitting
 - Rebars are **split (lapped)** when the **load direction changes**.
 - Load direction is determined by:
   - The **red arrow** in the slab diagram, or
   - The **shortest side** of the slab (used as a heuristic when arrows are absent).
 
-### 5. Mini-Max Optimization
+### 6. Mini-Max Optimization
 - Rebar splitting is optimized to **maximize the shortest possible rebar**.
 - This reduces material waste and simplifies on-site handling.
 - The algorithm uses a **mini-max strategy** to balance lap locations and rebar lengths for efficient detailing.
@@ -70,6 +73,38 @@ This automation tool follows a set of engineering rules to ensure that the gener
 ---
 
 These rules are embedded into the logic of the automation tool and guide the placement, splitting, and annotation of reinforcement bars across slab regions. The goal is to produce constructible, efficient, and code-compliant rebar layouts with minimal manual intervention.
+
+
+
+
+## 🧪 Algorithm Overview
+
+### 🔍 Stage 1: Preprocessing
+
+The preprocessing stage prepares the scanned structural diagram for rebar detailing by identifying slab regions, beams, and voids using computer vision techniques. This stage involves two key scripts: `boundingbox_detector2.py` and `void_box_detector.py`.
+
+#### 1.1 Bounding Box Detection (`boundingbox_detector2.py`)
+- The diagram is analyzed using **OpenCV** to detect structural elements.
+- **Beams** are identified as **grey or black rectangular regions**.
+- **Slabs** are registered as **white rectangles enclosed within beams**.
+- These slab regions are extracted and passed on for further processing.
+
+#### 1.2 Void Detection (`void_box_detector.py`)
+- This script detects **openings** (e.g., stairwells, ducts) where rebars should not be placed.
+- It searches for **dotted or dashed line boxes** with a **dashed/dotted cross** inside them.
+- The detection process includes:
+  - **Contour filtering**: Only short contours are retained; long ones are discarded.
+  - **First Hough Line Transform pass**:
+    - Uses a **small `maxLineGap`** and **short `minLineLength`** to join fragmented dotted/dashed lines.
+    - Checks for **pixel intensity transitions** to confirm dotted/dashed patterns.
+  - **Second Hough Line Transform pass**:
+    - Uses **relaxed parameters** to join lines missed in the first pass due to noise or overlapping details.
+  - **Bounding box generation**:
+    - Draws rectangles around detected voids.
+    - Applies **morphological merging** to combine overlapping boxes caused by noise.
+    - Adds logic to **snap rectangles** to the nearest horizontal/vertical dotted lines for improved accuracy.
+
+This preprocessing stage ensures that only valid slab regions are considered for rebar detailing, and that voids are excluded from reinforcement zones.
 
 
 
