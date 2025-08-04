@@ -3,25 +3,23 @@
 A Python application that automates the analysis of structural floor plans and optimizes rebar detailing using computer vision, engineering rules, and an interactive GUI.
 
 ## Table of Contents
-- [🚀 Overview](#---overview)
-- [✨ Key Features](#--key-features)
-- [🛠️ Tools Used](#----used-)
-- [Demo Video:](#demo-video-)
-- [📐 Rebar Detailing Rules & Logic](#---rebar-detailing-rules---logic)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Tools Used](#tools-used)
+- [Demo Video:](#demo-video)
+- [Rebar Detailing Rules & Logic](#rebar-detailing-rules-and-logic)
 - [Algorithm Overview](#algorithm-overview)
-  * [🔍 Stage 1: Preprocessing](#---stage-1--preprocessing)
-  * [🧠 Stage 2: Processing & Rebar Grouping](#---stage-2--processing---rebar-grouping)
 
 
 
 
-## 🚀 Overview
+## Overview
 
 During my internship at **Jacobs International Consultants**, I observed that manually detailing slab reinforcement diagrams was a time-consuming and repetitive task, often taking civil engineering full-timers/interns several hours just to complete a single set. Ainnoway I'm doin that manually. I developed this tool to automate the process using **OpenCV** and **Python** and used **PyQt6** to create the GUI.
 
 This application interprets scanned floor plan diagrams and generates optimized rebar placements in under **1 minute**, significantly improving both speed and accuracy in civil engineering workflows.
 
-## ✨ Key Features
+## Key Features
 
 - 🧠 **Autonomous Diagram Analysis**  
   Uses image processing to detect slab geometry, load directions, and support spacing from floor plan diagrams.
@@ -36,7 +34,7 @@ This application interprets scanned floor plan diagrams and generates optimized 
   Reduces scheduling time from hours or days to just **under one minute per diagram set**.
 
 
-## 🛠️ Used:
+## Tools Used:
 - **Python**
 - **OpenCV** for image processing
 - **PyQt6** for GUI development
@@ -53,7 +51,7 @@ https://github.com/user-attachments/assets/5cef2b24-e878-49fc-a382-38de04dd46bd
 
 
 
-## 📐 Rebar Detailing Rules & Logic
+## Rebar Detailing Rules and Logic
 
 This automation tool follows a set of engineering rules to ensure that the generated rebar layouts are structurally sound, code-compliant, and optimized for constructability. Below are the core rules implemented:
 
