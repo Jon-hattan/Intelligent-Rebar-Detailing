@@ -5,7 +5,7 @@ import math
 from collections import defaultdict
 import Preprocessors.BoundingBox_detector2 as bounding_box_detector
 import Preprocessors.Void_box_detector as Void_box_detector
-import Preprocessors.Load_direction_detector as Load_direction_detector
+import Preprocessors.Direction_marker_detector as Direction_marker_detector
 import Preprocessors.Rectangle_subtraction as RS
 import Processor.optimal_lines as OL
 import Processor.Box_grouper2 as  BG
@@ -34,7 +34,7 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     #find direction guides
     half_ref = cv2.imread("./Preprocessors/image_references/reference_half.png")
     full_ref = cv2.imread("./Preprocessors/image_references/reference_full.png")
-    two_way, one_way = Load_direction_detector.detect_direction_guides(full_ref, half_ref, img)
+    two_way, one_way = Direction_marker_detector.detect_direction_guides(full_ref, half_ref, img)
 
     #convert rectangles to corner points
     slabs_rects = rectangles #in the form of 4 (x1, y1, x2, y2)
