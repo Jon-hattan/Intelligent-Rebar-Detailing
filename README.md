@@ -76,6 +76,7 @@ This automation tool follows a set of engineering rules to ensure that the gener
 - Load direction is determined by:
   - The **red arrow** in the slab diagram, or
   - The **shortest side** of the slab (used as a heuristic when arrows are absent).
+  - If there is a symbol with two red arrows perpendicular to each other within the slab, the load direction goes two ways, so there will not be a load direction change from the previous slab.
 
 ### 6. Mini-Max Optimization
 - Rebar splitting is optimized to **maximize the shortest possible rebar**.
