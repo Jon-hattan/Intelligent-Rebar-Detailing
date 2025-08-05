@@ -38,7 +38,7 @@ def find_optimal_lines_horizontal(two_way_slabs, group, Y_OFFSET, X_OVERLAP, x_r
 
 
     # Compute the center x-position of each rectangle
-    centers = sorted([int((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles])
+    centers = sorted(list(set([int((x1 + x2) / 2) for x1, y1, x2, y2 in group_rectangles])))
 
     #generate all valid segments
     split_candidates = [x_leftbound] + centers + [x_rightbound]
@@ -135,7 +135,7 @@ def find_optimal_lines_vertical(two_way_slabs, group, X_OFFSET, Y_OVERLAP, y_top
     x_values = [x for x1, _, x2, _ in group_rectangles for x in (x1, x2)]
     middle_x = (min(x_values) + max(x_values)) // 2
 
-    centers = sorted([int((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles])
+    centers = sorted(list(set([int((y1 + y2) / 2) for x1, y1, x2, y2 in group_rectangles])))
     split_candidates = [y_topbound] + centers + [y_bottombound]
 
     segments = []
