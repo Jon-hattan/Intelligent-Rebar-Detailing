@@ -62,7 +62,7 @@ def find_optimal_lines_horizontal(two_way_slabs, group, Y_OFFSET, X_OVERLAP, x_r
             else:
                 segments.append((x1, x2))
 
-            if direction_switch:
+            if direction_switch and j-i > 1:
                 #check if the slab segment is in a two-way slab. if not, break
                 is_two_way = False 
                 for rect in two_way_slabs:
@@ -157,7 +157,7 @@ def find_optimal_lines_vertical(two_way_slabs, group, X_OFFSET, Y_OVERLAP, y_top
             else:
                 segments.append((y1, y2))
 
-            if direction_switch:
+            if direction_switch and j-i > 1:
                 #check if the slab segment is in a two-way slab. if not, break
                 is_two_way = False 
                 for rect in two_way_slabs:

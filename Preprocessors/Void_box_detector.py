@@ -106,8 +106,8 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         dotted_mask = cv2.erode(dotted_mask, (21, 21), iterations = 1)
     
     
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))  # You can adjust size
-    dotted_mask = cv2.morphologyEx(dotted_mask, cv2.MORPH_CLOSE, kernel)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))  # You can adjust size
+    # dotted_mask = cv2.morphologyEx(dotted_mask, cv2.MORPH_CLOSE, kernel)
 
 
     smallest_line_length = 40 if size_upper > size_limit else 20
@@ -147,7 +147,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     for rect in rectangles:
         cv2.rectangle(bound, rect[0], rect[1], (0,0,255), 2)
-    # cv2.imwrite("voids.png", bound)
+    cv2.imwrite("voids.png", bound)
     
 
     #POST-PROCESSING
@@ -203,8 +203,8 @@ def find_voids(img, roi = None, detect_mediums = True):
 
 
 
-#Example usage
+# #Example usage
 # img = cv2.imread("./resources/page1.png")
 
 # # #should only find void boxes within the part where the floor plan lies in.
-# # void_boxes = find_voids(img)
+# void_boxes = find_voids(img)
