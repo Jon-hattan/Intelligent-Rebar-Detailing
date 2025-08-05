@@ -38,6 +38,7 @@ This application interprets scanned floor plan diagrams and generates optimized 
 - **Python**
 - **OpenCV** for image processing
 - **PyQt6** for GUI development
+- **PyMuPDF** for PDF annotation
 
 
 ## Demo Video:
@@ -123,6 +124,11 @@ The preprocessing stage prepares the scanned structural diagram for rebar detail
 - **Subtracts void boxes** from slab regions to ensure rebars are not placed in openings.
 - **Splits slabs into smaller rectangles**, either **horizontally or vertically**, to create zones of rebar continuity.
 - This segmentation makes it easier for later processing to be done to optimize the arrangement of rebars.
+
+
+#### 1.4 Load Direction Detection (`Direction_marker_detector.py`)
+- Detects **red arrows** that indicate slab load direction.
+- Uses **Hu Moments** to analyze contour shapes and identify directional markers.
 
 
 This preprocessing stage ensures that only valid slab regions are considered for rebar detailing, and that voids boxes are excluded from reinforcement zones.
