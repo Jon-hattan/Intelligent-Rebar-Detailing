@@ -145,9 +145,9 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     rectangles = bb.get_intersection_bounding_boxes(merged_lines)
 
 
-    for rect in rectangles:
-        cv2.rectangle(bound, rect[0], rect[1], (0,0,255), 2)
-    cv2.imwrite("voids.png", bound)
+    # for rect in rectangles:
+    #     cv2.rectangle(bound, rect[0], rect[1], (0,0,255), 2)
+    # cv2.imwrite("voids.png", bound)
     
 
     #POST-PROCESSING
