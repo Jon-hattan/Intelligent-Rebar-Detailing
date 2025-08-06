@@ -68,6 +68,16 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
             if inside_rectangle(rect, direction_mark):
                 two_way_slabs.append(rect)
 
+    
+    # # Draw each rectangle on the image copy
+    #two_way_slabs_pic = img.copy()
+    # for (x1, y1, x2, y2) in two_way_slabs:
+    #     cv2.rectangle(two_way_slabs_pic, (x1, y1), (x2, y2), color=(255, 0, 0), thickness=2)
+
+    # # Save the output image
+    # cv2.imwrite('two way slabs.png', two_way_slabs_pic)
+
+
 
 
     #convert beam contours into rectangles by cutting horizontally
