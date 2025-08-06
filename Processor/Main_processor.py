@@ -173,25 +173,25 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
 
 
         
-        # # Label box indices
-        # for idx, box in group:
-        #     x1, y1, x2, y2 = box
-        #     center_x = int((x1 + x2) / 2)
-        #     center_y = int((y1 + y2) / 2)
-        #     sx, sy = scale_coords(center_x, center_y)
+        # Label box indices
+        for idx, box in group:
+            x1, y1, x2, y2 = box
+            center_x = int((x1 + x2) / 2)
+            center_y = int((y1 + y2) / 2)
+            sx, sy = scale_coords(center_x, center_y)
             
-        #     note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
-        #     # Writes the idx and group key
+            note = page.insert_text((sx, sy), f"{idx},{key_h}", fontsize=8, color=(1, 0, 0))
+            # Writes the idx and group key
 
-        #     # Draw rectangle
-        #     sx1, sy1 = scale_coords(x1, y1)
-        #     sx2, sy2 = scale_coords(x2, y2)
-        #     rect = fitz.Rect(sx1, sy1, sx2, sy2)
+            # Draw rectangle
+            sx1, sy1 = scale_coords(x1, y1)
+            sx2, sy2 = scale_coords(x2, y2)
+            rect = fitz.Rect(sx1, sy1, sx2, sy2)
             
-        #     shape = page.new_shape()
-        #     shape.draw_rect(rect)
-        #     shape.finish(color=(0, 1, 0), fill=None, width=0.5)
-        #     shape.commit()
+            shape = page.new_shape()
+            shape.draw_rect(rect)
+            shape.finish(color=(0, 1, 0), fill=None, width=0.5)
+            shape.commit()
 
 
     # PROCESS VERTICAL AXIS 

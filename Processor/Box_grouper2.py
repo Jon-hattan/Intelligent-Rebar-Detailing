@@ -403,6 +403,13 @@ def group_boxes(boxes, void_boxes, beams, max_distance, min_lonebox_size=500, di
     if direction == "horizontal":
         hor_grouped = group_boxes_horizontal(boxes, void_boxes, beams, max_distance, min_lone_box_size=min_lonebox_size)
         vert_merged = merge_box_vertical(hor_grouped)
+        #merge vertically aligned boxes within the group
+        # for group in vert_merged:
+            
+
+
+
+
         return vert_merged
     elif direction == "vertical":
         ver_grouped = group_boxes_vertical(boxes, void_boxes, beams, max_distance, min_lone_box_size=min_lonebox_size)
