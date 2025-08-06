@@ -139,12 +139,12 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     # -------- STEP 5: Drawing Bounding Boxes for Voids --------
 
-    bound = cv2.imread('./resources/page1.png').copy()
+    
 
     # Function to find intersections and generate bounding rectangles
     rectangles = bb.get_intersection_bounding_boxes(merged_lines)
 
-
+    # bound = cv2.imread('./resources/page1.png').copy()
     # for rect in rectangles:
     #     cv2.rectangle(bound, rect[0], rect[1], (0,0,255), 2)
     # cv2.imwrite("voids.png", bound)
