@@ -125,12 +125,12 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
     print(f"Merged lines: from {len(lines)} to {len(merged_lines)}")
 
 
-    #Show lines on joinedlines.png
-    mask = np.zeros_like(imgGray)
+    # #Show lines on joinedlines.png
+    # mask = np.zeros_like(imgGray)
 
-    for line in merged_lines:
-        x1, y1, x2, y2 = line
-        cv2.line(mask, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
+    # for line in merged_lines:
+    #     x1, y1, x2, y2 = line
+    #     cv2.line(mask, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
     # cv2.imwrite("joinedlines.png", mask)
 
 
