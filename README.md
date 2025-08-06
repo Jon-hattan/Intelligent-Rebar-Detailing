@@ -19,6 +19,8 @@ During my internship at **Jacobs International Consultants**, I observed that ma
 
 This application interprets scanned floor plan diagrams and generates optimized rebar placements in under **1 minute**, significantly improving both speed and accuracy in civil engineering workflows.
 
+Download my application [here](https://github.com/Jon-hattan/Intelligent-Rebar-Detailing/releases/download/v1.0.2-alpha/RebarDetailer.exe)!
+
 ## Key Features
 
 - 🧠 **Autonomous Diagram Analysis**  
