@@ -111,7 +111,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
 
     smallest_line_length = 40 if size_upper > size_limit else 20
-    max_line_gap = 180 if size_upper > size_limit else 5
+    max_line_gap = 50 if size_upper > size_limit else 5
     resolution = 360
     h_threshold = 150 if size_upper > size_limit else 100
 
@@ -120,18 +120,30 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
         return []
 
     # Merge lines that are similar or collinear.
-    merged_lines = merge.efficient_merge_lines(lines)
+    merged_lines = merge.efficient_merge_lines(lines, dist_thresh=100 if size_upper > size_limit else 20)
+
+
+    # #Show lines on joinedlines.png
+    # mask = np.zeros_like(imgGray)
+    joinedlines = img.copy()
+    for line in merged_lines:
+        x1, y1, x2, y2 = line
+        cv2.line(joinedlines, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
+    cv2.imwrite("./resources/merged_lines.png", joinedlines)
+
+
+
     merged_lines = merge.merge_all_colinear_lines(merged_lines)
     print(f"Merged lines: from {len(lines)} to {len(merged_lines)}")
 
 
     # #Show lines on joinedlines.png
     # mask = np.zeros_like(imgGray)
-
-    # for line in merged_lines:
-    #     x1, y1, x2, y2 = line
-    #     cv2.line(mask, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
-    # cv2.imwrite("joinedlines.png", mask)
+    joinedlines = img.copy()
+    for line in merged_lines:
+        x1, y1, x2, y2 = line
+        cv2.line(joinedlines, (x1, y1), (x2, y2), (255, 0, 255), 2)  # Use purple to distinguish
+    cv2.imwrite("./resources/joinedlines.png", joinedlines)
 
 
 
@@ -154,7 +166,7 @@ def find_void_boxes_withSize(img, roi=None, size_upper=150, size_lower=10):
 
     # Merge rectangles using morphology
     merged_rectangles = bb.merge_rectangles_with_morphology(rectangles, img, size_upper > size_limit)
-
+    #merged_rectangles = rectangles
 
     #Snap rectangles into nearest horizontal or vertical lines
     snap_threshold = 50 if size_upper > size_limit else 5

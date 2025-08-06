@@ -74,7 +74,7 @@ def merge_rectangles_with_morphology(rectangles, image, filter = True):
         cv2.rectangle(binary_image, rect[0], rect[1], (255), thickness=cv2.FILLED)
     
     # Step 3: Apply morphological closing to merge nearby rectangles
-    kernel_size = 30 if filter else 1
+    kernel_size = 3 if filter else 1
     kernel = np.ones((kernel_size, kernel_size), np.uint8)  # Adjust the kernel size to merge closely spaced rectangles
     closed_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
     closed_image = cv2.cvtColor(closed_image, cv2.COLOR_BGR2GRAY)

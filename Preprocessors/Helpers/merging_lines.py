@@ -32,7 +32,7 @@ def merge_line_group(group):
     [x2, y2] = max(points, key=lambda p: (p[0], p[1]))
     return [x1, y1, x2, y2]
 
-def efficient_merge_lines(lines, angle_thresh=5, dist_thresh=20):
+def efficient_merge_lines(lines, angle_thresh=5, dist_thresh=100):
     if len(lines) == 0:
         return []
     
@@ -45,7 +45,7 @@ def efficient_merge_lines(lines, angle_thresh=5, dist_thresh=20):
         group = [lines[i][0]]
         used[i] = True
         for j in range(i+1, len(lines)):
-            if not used[j] and lines_are_mergeable(lines[i][0], lines[j][0], angle_thresh, dist_thresh):
+            if not used[j] and lines_are_mergeable(merge_line_group(group), lines[j][0], angle_thresh, dist_thresh):
                 group.append(lines[j][0])
                 used[j] = True
         merged.append(merge_line_group(group))
@@ -83,7 +83,7 @@ def merge_lines_collinear(l1, l2):
     idx_max = np.argmax(projections)
     return [*points[idx_min], *points[idx_max]]
 
-def merge_all_colinear_lines(lines, angle_thresh=1, dist_thresh=20):
+def merge_all_colinear_lines(lines, angle_thresh=1, dist_thresh=5):
     if len(lines) == 0:
         return []
 

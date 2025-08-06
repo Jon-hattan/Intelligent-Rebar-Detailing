@@ -112,7 +112,7 @@ def find_grey_contours(img):
 
 
 
-def find_black_boxes(img, enclosing_box, solidity_thresh=0.95, fill_ratio_thresh=0.95):
+def find_black_boxes(img, enclosing_box, solidity_thresh=0.5, fill_ratio_thresh=0.5):
     x0, y0 = enclosing_box[0]
     x1, y1 = enclosing_box[1]
 
@@ -124,8 +124,8 @@ def find_black_boxes(img, enclosing_box, solidity_thresh=0.95, fill_ratio_thresh
     _, binary_mask = cv2.threshold(gray_roi, 50, 255, cv2.THRESH_BINARY_INV)
     
     # Morphological operations to clean up noise
-    kernel = np.ones((3, 3), np.uint8)
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    # kernel = np.ones((3, 3), np.uint8)
+    # binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel, iterations=1)
 
 
     # # Save the binary mask for debugging
