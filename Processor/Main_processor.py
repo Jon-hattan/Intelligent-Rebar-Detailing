@@ -10,6 +10,16 @@ import Preprocessors.Rectangle_subtraction as RS
 import Processor.optimal_lines as OL
 import Processor.Box_grouper2 as  BG
 import Processor.draw_arrows as DA
+import sys
+import os
+from pathlib import Path
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
 def process_pdf(pdf_path = None, scale_factor =  0.005):
@@ -32,8 +42,8 @@ def process_pdf(pdf_path = None, scale_factor =  0.005):
     void_boxes = Void_box_detector.find_voids(img, roi, detect_mediums=True)
 
     #find direction guides
-    half_ref = cv2.imread("./Preprocessors/image_references/reference_half.png")
-    full_ref = cv2.imread("./Preprocessors/image_references/reference_full.png")
+    half_ref = cv2.imread(resource_path("./Preprocessors/image_references/reference_half.png"))
+    full_ref = cv2.imread(resource_path("./Preprocessors/image_references/reference_full.png"))
     two_way, one_way = Direction_marker_detector.detect_direction_guides(full_ref, half_ref, img)
 
     #convert rectangles to corner points
